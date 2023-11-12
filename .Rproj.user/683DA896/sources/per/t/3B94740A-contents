@@ -1,0 +1,22 @@
+---
+title: "A2_Group5"
+author: "Mirre Dona (6156630)"
+date: "2023-11-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Load libraries
+```{r}
+
+```
+
+
+#Import dataset
+```{r}
+
+```
+
