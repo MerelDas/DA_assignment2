@@ -28,13 +28,35 @@ library(rpart.plot)
 library(randomForest)
 library(pROC) #ROC curve
 library(caret) #bagging,  boosting, rf
+library(mice)
 
 ```
 
 
 #Import dataset
 ```{r}
-df <- read.csv('data/Sleep_health_and_lifestyle_dataset.csv')
-View(df)
+sleepdata <- read.csv('data/Sleep_health_and_lifestyle_dataset.csv')
+View(sleepdata)
+```
+
+#Data cleaning
+```{r}
+md.pattern(sleepdata)
+```
+There is no missing data in this dataset!
+
+Let's convert the variables to the right type for exploration and prediction later on.
+```{r}
+#check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
+unique(sleepdata$Occupation)
+```
+
+
+```{r}
+sleepdata %<>% 
+  mutate(Gender   = as.factor(Gender),
+         Occupation = as.factor(Occupation),
+         BMI.Category = as.factor(BMI.Category)) %>% 
+  select(-Person.ID)
 ```
 
