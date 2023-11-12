@@ -71,7 +71,6 @@ For our analysis and prediction we do not need the person identifier of each cas
 sleepdata %<>% select(-Person.ID)
 ```
 
-
 ## Outlier removal
 Check outliers
 
@@ -145,8 +144,12 @@ melted_corr_mat <- melt(corr_mat)
 ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
 
 ```
+### PCA (of wa anders)
 
+## Simple model selection
+### Train, dev, test
 
+### Train model
 
 # Classification tree
 ```{r}
@@ -178,20 +181,14 @@ gbm_train <- train(Quality.of.Sleep ~ .,
 summary(gbm_train) #var importance plot
 predictions <- predict(gbm_train)
 
-### PCA (of wa anders)
+```
 
-## Simple model selection
-### Train, dev, test
-
-### Train model
 
 ### Performance evaluation
 
 ### Interpretation of model
 
 ## Complex model selection
-
-```
 
 
 
