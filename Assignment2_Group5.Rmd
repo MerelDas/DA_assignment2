@@ -11,7 +11,24 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #Load libraries
 ```{r}
+library(ISLR)
+library(tidyverse)
+library(haven)
 library(readr)
+library(dplyr)
+library(magrittr) #to use piping %>% 
+library(class) #knn()
+library(MASS) #lda()
+library(splines) #bs() ns()
+library(cowplot) #plot_grid()
+library(psych) #describeBy()
+#tree based methods
+library(rpart)
+library(rpart.plot)
+library(randomForest)
+library(pROC) #ROC curve
+library(caret) #bagging,  boosting, rf
+
 ```
 
 
