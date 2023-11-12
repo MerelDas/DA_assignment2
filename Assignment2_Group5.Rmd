@@ -11,12 +11,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #Load libraries
 ```{r}
-
+library(readr)
 ```
 
 
 #Import dataset
 ```{r}
-
+df <- read.csv('data/Sleep_health_and_lifestyle_dataset.csv')
+View(df)
 ```
 
