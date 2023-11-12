@@ -72,32 +72,33 @@ sleepdata %<>% select(-Person.ID)
 ```
 
 ## Outlier removal
-Check outliers
+We checked for potential outliers based on the IQR criterion. For this, we used boxplot stats per numerical value, and looked how many outliers it produced. 
 
+```{r}
+boxplot.stats(sleepdata$Sleep.Duration)$out
+boxplot.stats(sleepdata$Quality.of.Sleep)$out
+boxplot.stats(sleepdata$Physical.Activity.Level)$out
+boxplot.stats(sleepdata$Stress.Level)$out
+boxplot.stats(sleepdata$Heart.Rate)$out
+boxplot.stats(sleepdata$Daily.Steps)$out
+
+out <- boxplot.stats(sleepdata$Heart.Rate)$out
+out_ind <- which(sleepdata$Heart.Rate %in% c(out))
+sleepdata[out_ind, ]
+```
+As can be seen, only the Heart.Rate variable contains outliers; people with a much higher than average heart rate during sleep. When we look at the entries, we see that all these people have a sleep disorder, and that almost all of them are overweight or obese. Because of this, we conclude that these are "expected" outliers, and keep them in the dataset. 
 
 # Exploratory data analysis
 
+To explore the data, we take a look at different factors we have deemed as important: Quality of sleep, sleep duration, and BMI category
+
 ```{r}
-#summary of the data
-summary(sleepdata)
-
-#check for the most important variables
-
-# use ggplot2 to plot the data of sleep quality compared to sleep duration
-plot_sleepdata <- sleepdata %>% 
-  ggplot(aes(x=Quality.of.Sleep, y=Sleep.Duration)) + 
-  geom_point(position = "jitter") + 
-  theme_minimal() +
-  geom_smooth() +
-  labs(title="Sleep quality compared to sleep duration", x="Sleep quality", y="Sleep duration")
-plot_sleepdata
-
 # create a boxplot of the sleep quality per sleep duration.
 plot_sleepdata2 <- sleepdata %>% mutate(
   Quality.of.Sleep = as.factor(Quality.of.Sleep)
 ) %>% 
   ggplot(aes(x=Quality.of.Sleep, y=Sleep.Duration)) + 
-  geom_boxplot() + 
+  geom_boxplot(fill = "lightblue") + 
   theme_minimal() +
   labs(title="Sleep quality compared to sleep duration", x="Sleep quality", y="Sleep duration")
 plot_sleepdata2
@@ -105,9 +106,6 @@ plot_sleepdata2
 ggplot(sleepdata, aes(x = Gender, y = Quality.of.Sleep)) +
   geom_boxplot(fill = "lightblue") +
   labs(title = "Sleep Quality by Gender", y = "Quality of Sleep")
-
-ggplot(sleepdata, aes(x = Occupation)) +
-  geom_bar()
 
 sleepdata %>% 
   group_by(Occupation) %>% 
@@ -119,9 +117,10 @@ sleepdata %>%
   )
 
 sleepdata %>% 
-  ggplot(aes(x = BMI.Category, y = Daily.Steps)) + 
+  ggplot(aes(x = BMI.Category, y = Quality.of.Sleep)) + 
   scale_x_discrete(limits = c("Normal", "Normal Weight", "Overweight", "Obese")) +
   geom_boxplot()
+
 ```
 From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).
 
@@ -170,10 +169,6 @@ generate_formulas <- function(p, x_vars, y_var) {
 }
 ```
 
-
-
-
-
 ### PCA (of wa anders)
 
 ## Simple model selection
@@ -196,7 +191,6 @@ simple_predictions <- test_train %>%
   mutate(Blood.Pressure = )
   predict(simple_model, newdata = test_data)
 ```
-
 
 ### Train model
 

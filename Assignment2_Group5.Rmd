@@ -169,10 +169,6 @@ generate_formulas <- function(p, x_vars, y_var) {
 }
 ```
 
-
-
-
-
 ### PCA (of wa anders)
 
 ## Simple model selection
@@ -195,7 +191,6 @@ simple_predictions <- test_train %>%
   mutate(Blood.Pressure = )
   predict(simple_model, newdata = test_data)
 ```
-
 
 ### Train model
 
