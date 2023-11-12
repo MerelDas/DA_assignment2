@@ -93,6 +93,27 @@ plot_sleepdata2 <- sleepdata %>% mutate(
   theme_minimal() +
   labs(title="Sleep quality compared to sleep duration", x="Sleep quality", y="Sleep duration")
 plot_sleepdata2
+
+ggplot(sleepdata, aes(x = Gender, y = Quality.of.Sleep)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Sleep Quality by Gender", y = "Quality of Sleep")
+
+ggplot(sleepdata, aes(x = Occupation)) +
+  geom_bar()
+
+sleepdata %>% 
+  group_by(Occupation) %>% 
+  summarise( 
+    median = median(Sleep.Duration),
+    min = min(Sleep.Duration),
+    max = max(Sleep.Duration),
+    mad = mad(Sleep.Duration) # Adding median absolute deviation 
+  )
+
+sleepdata %>% 
+  ggplot(aes(x = BMI.Category, y = Daily.Steps)) + 
+  scale_x_discrete(limits = c("Normal", "Normal Weight", "Overweight", "Obese")) +
+  geom_boxplot()
 ```
 
 # Prediction model
