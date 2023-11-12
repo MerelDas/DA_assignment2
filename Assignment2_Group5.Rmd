@@ -102,11 +102,18 @@ plot_sleepdata2 <- sleepdata %>% mutate(
   theme_minimal() +
   labs(title="Sleep quality compared to sleep duration", x="Sleep quality", y="Sleep duration")
 plot_sleepdata2
+```
 
+As can be seen in the box plot above, generally, the sleep quality increases as sleep duration increases. 
+```{r}
 ggplot(sleepdata, aes(x = Gender, y = Quality.of.Sleep)) +
   geom_boxplot(fill = "lightblue") +
+  theme_minimal() +
   labs(title = "Sleep Quality by Gender", y = "Quality of Sleep")
+```
+Moreover, women seem to have a higher quality of sleep on average compared to men. 
 
+```{r}
 sleepdata %>% 
   group_by(Occupation) %>% 
   summarise( 
@@ -115,14 +122,18 @@ sleepdata %>%
     max = max(Sleep.Duration),
     mad = mad(Sleep.Duration) # Adding median absolute deviation 
   )
+```
+Then, looking at the median, min, max, and median absolute deviation sleep duration per occupation, it can be seen that Sales Representatives sleep the least on average, followed by Scientist. Though the variation is not very strong per occupation, there is some variance. 
 
+```{r}
 sleepdata %>% 
   ggplot(aes(x = BMI.Category, y = Quality.of.Sleep)) + 
   scale_x_discrete(limits = c("Normal", "Normal Weight", "Overweight", "Obese")) +
-  geom_boxplot()
-
+  geom_boxplot(fill = "lightblue") + 
+  theme_minimal() + 
+  labs(title = "Sleep Quality per BMI category", x = "BMI category", y = "Quality of Sleep")
 ```
-From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).
+Lastly, looking at how the BMI category impacts the quality of sleep, people with lower weight seem to sleep better than heavier people. 
 
 # Prediction model
 As described above, the response variable we chose to predict is quality of sleep. This response variable is a numerical variable with possible integer values 1 through 10. We considered converting this to a categorical variable 
