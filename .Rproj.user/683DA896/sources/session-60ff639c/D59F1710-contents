@@ -1,6 +1,6 @@
 ---
 title: "A2_Group5"
-author: "Mirre Dona (6156630)"
+author: "Mirre Dona (6156630), Merel Das (6600034)"
 date: "2023-11-12"
 output: html_document
 ---
@@ -19,6 +19,7 @@ library(magrittr) # for pipes
 library(mice) # for missing data
 library(ggplot2) # for plotting
 library(psych)
+library(reshape2)
 
 library(randomForest)
 library(rpart)
@@ -52,21 +53,23 @@ Let's convert the variables to the right type for exploration and prediction lat
 ```{r}
 #check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
 unique(sleepdata$Occupation)
+#The amount of values for the other chr variables were inspected in the R environment
 ```
 
 ```{r}
 sleepdata %<>% 
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
-         BMI.Category = as.factor(BMI.Category))
+         BMI.Category = as.factor(BMI.Category),
+         Sleep.Disorder = as.factor(Sleep.Disorder))
 ```
+!!nog iets doen met blood pressure
 
 ## Select variables
 For our analysis and prediction we do not need the person identifier of each case, so we remove this variable.
 ```{r}
 sleepdata %<>% select(-Person.ID)
 ```
-
 
 ## Outlier removal
 Check outliers
@@ -120,14 +123,19 @@ sleepdata %>%
   scale_x_discrete(limits = c("Normal", "Normal Weight", "Overweight", "Obese")) +
   geom_boxplot()
 ```
+From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).
 
 # Prediction model
-As described above, the response variable we chose to predict is quality of sleep. ...
+As described above, the response variable we chose to predict is quality of sleep.
 
 ## Feature selection
-To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find the most informative predictors, we will inspect the correlation between sleep quality and the other variables in the dataset. We will also use a feature selection method to find the best predictors. 
+To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find the most informative predictors, we will do a correlation analysis and feature importance analysis. 
 
 ### Correlation
+```{r}
+cordata <- sleepdata %>% select(-Gender, -Occupation, -BMI.Category, -Blood.Pressure, -Sleep.Disorder)
+#create correlation matrix
+corr_mat <- round(cor(cordata),2)
 
 #train, test, etc.
 ```{r}
@@ -148,6 +156,20 @@ simple_predictions <- test_train %>%
   predict(simple_model, newdata = test_data)
 
 ```
+
+# reduce the size of correlation matrix
+melted_corr_mat <- melt(corr_mat)
+ 
+# plotting the correlation heatmap
+ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
+
+```
+### PCA (of wa anders)
+
+## Simple model selection
+### Train, dev, test
+
+### Train model
 
 # Classification tree
 ```{r}
@@ -179,12 +201,16 @@ gbm_train <- train(Quality.of.Sleep ~ .,
 summary(gbm_train) #var importance plot
 predictions <- predict(gbm_train)
 
-### PCA (of wa anders)
 ```
 
-<<<<<<< HEAD
-From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).
-=======
->>>>>>> 728a474b78c4895536e7678d16eaa02d7f2b96e2
+
+### Performance evaluation
+
+### Interpretation of model
+
+## Complex model selection
+
+
+
 
 
