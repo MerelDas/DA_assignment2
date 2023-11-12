@@ -18,9 +18,9 @@ library(dplyr)
 library(magrittr) # for pipes
 library(mice) # for missing data
 library(ggplot2) # for plotting
+library(psych)
 
 ```
-
 
 # Import dataset
 ```{r}
@@ -33,6 +33,7 @@ The Sleep Health and Lifestyle Dataset, here called sleepdata, consists of 400 r
 
 To download the dataset, click [here](https://www.kaggle.com/code/jillanisofttech/sleep-health-and-lifestyle-predication-with-94-ac).
 
+With this dataset, we aim to predict a person's sleep quality. We chose this response variable as we think it is valuable information for a person. Sleep quality is important for your health and can affect mental-health issues. It also influences how you feel during the day, which affects the activities you undertake and how well you do them.
 
 # Data cleaning
 ## Missing data
@@ -52,12 +53,19 @@ unique(sleepdata$Occupation)
 sleepdata %<>% 
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
-         BMI.Category = as.factor(BMI.Category)) %>% 
-  select(-Person.ID)
+         BMI.Category = as.factor(BMI.Category))
 ```
+
+## Select variables
+For our analysis and prediction we do not need the person identifier of each case, so we remove this variable.
+```{r}
+sleepdata %<>% select(-Person.ID)
+```
+
 
 ## Outlier removal
 Check outliers
+
 
 # Exploratory data analysis
 
@@ -93,6 +101,15 @@ As can be seen, the sleep quality is higher when the sleep duration is higher. T
 sleepdata %>%  
   group_by(Quality.of.Sleep) %>% 
   summarise(n = n())
+# Prediction model
+As described above, the response variable we chose to predict is quality of sleep. ...
+
+## Feature selection
+To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find the most informative predictors, we will inspect the correlation between sleep quality and the other variables in the dataset. We will also use a feature selection method to find the best predictors. 
+
+### Correlation
+
+### PCA (of wa anders)
 
 ```
 From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).

@@ -1,6 +1,0 @@
-"0","describeBy(sleepdata$Sleep_Quality, group = sleepdata$BMI_Category)
-"
-"2","Warning: argument is not numeric or logical: returning NA"
-"2","Error in stats[1, 3] <- median(x, na.rm = na.rm) : 
-  number of items to replace is not a multiple of replacement length
-"
