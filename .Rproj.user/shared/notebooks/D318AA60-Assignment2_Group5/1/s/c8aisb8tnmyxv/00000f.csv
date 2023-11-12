@@ -1,0 +1,8 @@
+"0","sleepdata %<>% 
+  mutate(Gender   = as.factor(Gender),
+         Occupation = as.factor(Occupation),
+         BMI.Category = as.factor(BMI.Category)) %>% 
+  select(-Person.ID)
+"
+"2","Error in select(., -Person.ID) : unused argument (-Person.ID)
+"

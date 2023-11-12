@@ -1,0 +1,1 @@
+{"frames":[{"func":"sleepdata %<>% mutate(Gender = as.factor(Gender), Occupation = as.factor(Occupation), \n    BMI.Category = as.factor(BMI.Category)) %>% select(-Person.ID)","file":"","line_number":0,"end_line_number":0,"character_number":0,"end_character_number":0}],"message":"Error in select(., -Person.ID) : unused argument (-Person.ID)\n"}
