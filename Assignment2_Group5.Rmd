@@ -33,24 +33,31 @@ library(mice)
 ```
 
 
-#Import dataset
+# Import dataset
 ```{r}
 sleepdata <- read.csv('data/Sleep_health_and_lifestyle_dataset.csv')
 View(sleepdata)
 ```
 
-#Data cleaning
+# Description of the data
+The Sleep Health and Lifestyle Dataset, here called sleepdata, consists of 400 rows and 13 columns. The dataset consists of sleep-related data. A lot of variables are presented, including gender, age, occupation, sleep duration, quality of sleep, physical activity levels, stress levels, BMI category, blood pressure, heart rate, daily steps, and, if it is the case, the sleep disorders. This dataset offers the opportunity to gain insights into whether sleep factors and lifestyle factors are related.
+
+To download the dataset, click [here](https://www.kaggle.com/code/jillanisofttech/sleep-health-and-lifestyle-predication-with-94-ac).
+
+
+# Data cleaning
+## Missing data
 ```{r}
 md.pattern(sleepdata)
 ```
 There is no missing data in this dataset!
 
+## Transform variable types
 Let's convert the variables to the right type for exploration and prediction later on.
 ```{r}
 #check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
 unique(sleepdata$Occupation)
 ```
-
 
 ```{r}
 sleepdata %<>% 
@@ -60,10 +67,6 @@ sleepdata %<>%
   select(-Person.ID)
 ```
 
-# Description of the data
-The Sleep Health and Lifestyle Dataset, here called sleepdata, consists of 400 rows and 13 columns. The dataset consists of sleep-related data. A lot of variables are presented, including gender, age, occupation, sleep duration, quality of sleep, physical activity levels, stress levels, BMI category, blood pressure, heart rate, daily steps, and, if it is the case, the sleep disorders. This dataset offers the opportunity to gain insights into whether sleep factors and lifestyle factors are related.
-
-To download the dataset, click [here](https://www.kaggle.com/code/jillanisofttech/sleep-health-and-lifestyle-predication-with-94-ac).
 
 # Exploratory data analysis
 
