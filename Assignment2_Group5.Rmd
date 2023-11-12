@@ -1,6 +1,6 @@
 ---
 title: "A2_Group5"
-author: "Mirre Dona (6156630)"
+author: "Mirre Dona (6156630), Merel Das (6600034)"
 date: "2023-11-12"
 output: html_document
 ---
@@ -19,6 +19,7 @@ library(magrittr) # for pipes
 library(mice) # for missing data
 library(ggplot2) # for plotting
 library(psych)
+library(reshape2)
 ```
 
 # Import dataset
@@ -47,14 +48,17 @@ Let's convert the variables to the right type for exploration and prediction lat
 ```{r}
 #check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
 unique(sleepdata$Occupation)
+#The amount of values for the other chr variables were inspected in the R environment
 ```
 
 ```{r}
 sleepdata %<>% 
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
-         BMI.Category = as.factor(BMI.Category))
+         BMI.Category = as.factor(BMI.Category),
+         Sleep.Disorder = as.factor(Sleep.Disorder))
 ```
+!!nog iets doen met blood pressure
 
 ## Select variables
 For our analysis and prediction we do not need the person identifier of each case, so we remove this variable.
@@ -117,14 +121,38 @@ sleepdata %>%
 ```
 
 # Prediction model
-As described above, the response variable we chose to predict is quality of sleep. ...
+As described above, the response variable we chose to predict is quality of sleep.
 
 ## Feature selection
-To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find the most informative predictors, we will inspect the correlation between sleep quality and the other variables in the dataset. We will also use a feature selection method to find the best predictors. 
+To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find the most informative predictors, we will do a correlation analysis and feature importance analysis. 
 
 ### Correlation
+```{r}
+cordata <- sleepdata %>% select(-Gender, -Occupation, -BMI.Category, -Blood.Pressure, -Sleep.Disorder)
+#create correlation matrix
+corr_mat <- round(cor(cordata),2)
+
+# reduce the size of correlation matrix
+melted_corr_mat <- melt(corr_mat)
+ 
+# plotting the correlation heatmap
+ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
+
+```
+
 
 ### PCA (of wa anders)
+
+## Simple model selection
+### Train, dev, test
+
+### Train model
+
+### Performance evaluation
+
+### Interpretation of model
+
+## Complex model selection
 
 
 
