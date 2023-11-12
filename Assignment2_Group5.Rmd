@@ -33,7 +33,7 @@ The Sleep Health and Lifestyle Dataset, here called sleepdata, consists of 400 r
 
 To download the dataset, click [here](https://www.kaggle.com/code/jillanisofttech/sleep-health-and-lifestyle-predication-with-94-ac).
 
-With this dataset, we aim to predict a person's sleep quality. We chose this response variable as we think it is valuable information for a person. Sleep quality is important for your health and how you feel during the day. This can also affect the activities you undertake, how well you do them, and can affect mental-health issues.
+With this dataset, we aim to predict a person's sleep quality. We chose this response variable as we think it is valuable information for a person. Sleep quality is important for your health and can affect mental-health issues. It also influences how you feel during the day, which affects the activities you undertake and how well you do them.
 
 # Data cleaning
 ## Missing data
