@@ -137,8 +137,20 @@ cordata <- sleepdata %>% select(-Gender, -Occupation, -BMI.Category, -Blood.Pres
 #create correlation matrix
 corr_mat <- round(cor(cordata),2)
 
-#train, test, etc.
+# reduce the size of correlation matrix
+melted_corr_mat <- melt(corr_mat)
+ 
+# plotting the correlation heatmap
+ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
+
+```
+
+### PCA (of wa anders)
+
+## Simple model selection
+### Train, dev, test
 ```{r}
+#train, test, etc.
 set.seed(123)
 train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set.
 train_data <- sleepdata[train,]
@@ -154,20 +166,8 @@ simple_model <- lm(Quality.of.Sleep ~ ., data = train_data)
 simple_predictions <- test_train %>% 
   mutate(Blood.Pressure = )
   predict(simple_model, newdata = test_data)
-
 ```
 
-# reduce the size of correlation matrix
-melted_corr_mat <- melt(corr_mat)
- 
-# plotting the correlation heatmap
-ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
-
-```
-### PCA (of wa anders)
-
-## Simple model selection
-### Train, dev, test
 
 ### Train model
 
