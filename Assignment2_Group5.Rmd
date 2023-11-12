@@ -132,7 +132,14 @@ To create a well performing model to predict sleep quality, it is important to c
 
 ### Correlation
 ```{r}
-cordata <- sleepdata %>% select(-Gender, -Occupation, -BMI.Category, -Blood.Pressure, -Sleep.Disorder)
+cordata <- sleepdata %>% 
+  mutate(Gender   = as.numeric(Gender),
+         Occupation = as.numeric(Occupation),
+         BMI.Category = as.numeric(BMI.Category),
+         Sleep.Disorder = as.numeric(Sleep.Disorder),
+         Blood.Pressure = as.numeric(Blood.Pressure))
+
+
 #create correlation matrix
 corr_mat <- round(cor(cordata),2)
 
@@ -140,9 +147,9 @@ corr_mat <- round(cor(cordata),2)
 melted_corr_mat <- melt(corr_mat)
 
 # plotting the correlation heatmap
-ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
+ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()+ theme(axis.text.x=element_text(angle=-15, hjust=-0.01))  + geom_text(aes(Var2, Var1, label = value), color = "white", size = 2)
 ```
-
+The variable sleep duration is the most correlated with sleep quality. 
 
 
 ## Simple model selection
