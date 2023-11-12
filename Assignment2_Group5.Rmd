@@ -1,6 +1,6 @@
 ---
 title: "A2_Group5"
-author: "Mirre Dona (6156630), Merel Das (6600034)"
+author: "Mirre Dona (6156630), Merel Das (6600034), Lukas Stemerdink (6217265)"
 date: "2023-11-12"
 output: html_document
 ---
@@ -125,10 +125,10 @@ sleepdata %>%
 From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).
 
 # Prediction model
-As described above, the response variable we chose to predict is quality of sleep. 
+As described above, the response variable we chose to predict is quality of sleep. This response variable is a numerical variable with possible integer values 1 through 10. We considered converting this to a categorical variable 
 
 ## Feature selection
-To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find the most informative predictors, we will do a correlation analysis and feature importance analysis. 
+To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find which features are probably the most useful for predicting sleep quality, we do a short correlation analysis.
 
 ### Correlation
 ```{r}
@@ -138,10 +138,32 @@ corr_mat <- round(cor(cordata),2)
 
 # reduce the size of correlation matrix
 melted_corr_mat <- melt(corr_mat)
- 
+
 # plotting the correlation heatmap
 ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
+```
 
+
+
+## Simple model selection
+### Train, dev, test
+```{r}
+#train, test, etc.
+set.seed(123)
+train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set.
+train_data <- sleepdata[train,]
+test_data <- sleepdata[-train,] #use the other 25% of the rows for the test set.
+
+```
+
+```{r}
+# Train a simple linear regression model
+simple_model <- lm(Quality.of.Sleep ~ ., data = train_data)
+
+# Make predictions on the test set
+simple_predictions <- test_train %>% 
+  mutate(Blood.Pressure = )
+  predict(simple_model, newdata = test_data)
 ```
 
 # R function to generate all formulas up to size n
