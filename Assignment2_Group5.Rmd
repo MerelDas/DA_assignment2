@@ -86,7 +86,15 @@ plot_sleepdata2 <- sleepdata %>% mutate(
   labs(title="Sleep quality compared to sleep duration", x="Sleep quality", y="Sleep duration")
 plot_sleepdata2
 ```
+As can be seen, the sleep quality is higher when the sleep duration is higher. This seems logical, because when you sleep longer, you are more rested and therefore feel better. Besides, when the sleep quality is 7, there seems to be the highest variety in sleep duration. It could be tested whether the reason behind this is that most people filled in 7 as sleep quality.
 
+```{r}
+# test whether the reason behind the high variety in sleep duration when the sleep quality is 7 is that most people filled in 7 as sleep quality.
+sleepdata %>%  
+  group_by(Quality.of.Sleep) %>% 
+  summarise(n = n())
 
+```
+From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).
 
-
+```{r}
