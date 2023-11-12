@@ -19,6 +19,11 @@ library(magrittr) # for pipes
 library(mice) # for missing data
 library(ggplot2) # for plotting
 library(psych)
+
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+
 ```
 
 # Import dataset
@@ -123,6 +128,33 @@ As described above, the response variable we chose to predict is quality of slee
 To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find the most informative predictors, we will inspect the correlation between sleep quality and the other variables in the dataset. We will also use a feature selection method to find the best predictors. 
 
 ### Correlation
+
+```{r}
+##Classification tree
+
+tree_mod <- rpart(Quality.of.Sleep ~ ., data = sleepdata)
+rpart.plot(tree_mod) #plot tree
+
+##Random forest
+rf_mod <- randomForest(Quality.of.Sleep ~ ., data = sleepdata)
+rf_mod
+importance <- importance(rf_mod)
+
+tibble(
+  importance = c(importance), 
+  variable = rownames(importance)
+) %>% 
+  ggplot(aes(x = variable, y = importance, fill = variable)) +
+  geom_bar(stat = "identity")
+
+#boosting
+gbm_train <- train(Quality.of.Sleep ~ .,
+                   data = sleepdata,
+                   method = "gbm",
+                   verbose = F, 
+                   trControl = cvcontrol) #print bag_train, rf_train, gbm_train models to see accuracy
+summary(gbm_train) #var importance plot
+predictions <- predict(gbm_train)
 
 ### PCA (of wa anders)
 
