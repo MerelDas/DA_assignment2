@@ -125,10 +125,10 @@ sleepdata %>%
 From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).
 
 # Prediction model
-As described above, the response variable we chose to predict is quality of sleep.
+As described above, the response variable we chose to predict is quality of sleep. This response variable is a numerical variable with possible integer values 1 through 10. We considered converting this to a categorical variable 
 
 ## Feature selection
-To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find the most informative predictors, we will do a correlation analysis and feature importance analysis. 
+To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find which features are probably the most useful for predicting sleep quality, we do a short correlation analysis.
 
 ### Correlation
 ```{r}
@@ -138,11 +138,39 @@ corr_mat <- round(cor(cordata),2)
 
 # reduce the size of correlation matrix
 melted_corr_mat <- melt(corr_mat)
- 
+
 # plotting the correlation heatmap
 ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
-
 ```
+
+# R function to generate all formulas up to size n
+# Erik-Jan van Kesteren
+# October 2018
+
+# Input : 
+#  p      : number of variables 
+#  x_vars : character vector of x vars
+#  y_var  : character of y var
+
+# Output: character vector of formulas
+```{r}
+generate_formulas <- function(p, x_vars, y_var) {
+  # Input checking
+  if (p %% 1 != 0)           stop("Input an integer n")
+  if (p > length(x_vars))    stop("p should be smaller than number of vars")
+  if (!is.character(x_vars)) stop("x_vars should be a character vector")
+  if (!is.character(y_var))  stop("y_vars should be character type")
+  
+  # combn generates all combinations, apply turns them into formula strings
+  apply(combn(x_vars, p), 2, function(vars) {
+    paste0(y_var, " ~ ", paste(vars, collapse = " + "))
+  })
+}
+```
+
+
+
+
 
 ### PCA (of wa anders)
 
