@@ -20,6 +20,10 @@ library(mice) # for missing data
 library(ggplot2) # for plotting
 library(psych)
 
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+
 ```
 
 # Import dataset
@@ -36,6 +40,7 @@ To download the dataset, click [here](https://www.kaggle.com/code/jillanisofttec
 With this dataset, we aim to predict a person's sleep quality. We chose this response variable as we think it is valuable information for a person. Sleep quality is important for your health and can affect mental-health issues. It also influences how you feel during the day, which affects the activities you undertake and how well you do them.
 
 # Data cleaning
+Before we begin, the data should be cleaned for proper use.
 ## Missing data
 ```{r}
 md.pattern(sleepdata)
@@ -93,14 +98,29 @@ plot_sleepdata2 <- sleepdata %>% mutate(
   theme_minimal() +
   labs(title="Sleep quality compared to sleep duration", x="Sleep quality", y="Sleep duration")
 plot_sleepdata2
-```
-As can be seen, the sleep quality is higher when the sleep duration is higher. This seems logical, because when you sleep longer, you are more rested and therefore feel better. Besides, when the sleep quality is 7, there seems to be the highest variety in sleep duration. It could be tested whether the reason behind this is that most people filled in 7 as sleep quality.
 
-```{r}
-# test whether the reason behind the high variety in sleep duration when the sleep quality is 7 is that most people filled in 7 as sleep quality.
-sleepdata %>%  
-  group_by(Quality.of.Sleep) %>% 
-  summarise(n = n())
+ggplot(sleepdata, aes(x = Gender, y = Quality.of.Sleep)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Sleep Quality by Gender", y = "Quality of Sleep")
+
+ggplot(sleepdata, aes(x = Occupation)) +
+  geom_bar()
+
+sleepdata %>% 
+  group_by(Occupation) %>% 
+  summarise( 
+    median = median(Sleep.Duration),
+    min = min(Sleep.Duration),
+    max = max(Sleep.Duration),
+    mad = mad(Sleep.Duration) # Adding median absolute deviation 
+  )
+
+sleepdata %>% 
+  ggplot(aes(x = BMI.Category, y = Daily.Steps)) + 
+  scale_x_discrete(limits = c("Normal", "Normal Weight", "Overweight", "Obese")) +
+  geom_boxplot()
+```
+
 # Prediction model
 As described above, the response variable we chose to predict is quality of sleep. ...
 
@@ -109,7 +129,43 @@ To create a well performing model to predict sleep quality, it is important to c
 
 ### Correlation
 
-### PCA (of wa anders)
 
+# Classification tree
+```{r}
+tree_mod <- rpart(Quality.of.Sleep ~ ., data = sleepdata)
+rpart.plot(tree_mod) #plot tree
 ```
+
+# Random forest
+```{r}
+rf_mod <- randomForest(Quality.of.Sleep ~ ., data = sleepdata)
+rf_mod
+importance <- importance(rf_mod)
+
+tibble(
+  importance = c(importance), 
+  variable = rownames(importance)
+) %>% 
+  ggplot(aes(x = variable, y = importance, fill = variable)) +
+  geom_bar(stat = "identity")
+```
+
+# Boosting
+```{r}
+gbm_train <- train(Quality.of.Sleep ~ .,
+                   data = sleepdata,
+                   method = "gbm",
+                   verbose = F, 
+                   trControl = cvcontrol) #print bag_train, rf_train, gbm_train models to see accuracy
+summary(gbm_train) #var importance plot
+predictions <- predict(gbm_train)
+
+### PCA (of wa anders)
+```
+
+<<<<<<< HEAD
 From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).
+=======
+>>>>>>> 728a474b78c4895536e7678d16eaa02d7f2b96e2
+
+
