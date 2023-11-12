@@ -129,6 +129,26 @@ To create a well performing model to predict sleep quality, it is important to c
 
 ### Correlation
 
+#train, test, etc.
+```{r}
+set.seed(123)
+train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set.
+train_data <- sleepdata[train,]
+test_data <- sleepdata[-train,] #use the other 25% of the rows for the test set.
+
+#EDA
+summary(train_data)
+
+# Train a simple linear regression model
+simple_model <- lm(Quality.of.Sleep ~ ., data = train_data)
+
+# Make predictions on the test set
+simple_predictions <- test_train %>% 
+  mutate(Blood.Pressure = )
+  predict(simple_model, newdata = test_data)
+
+```
+
 
 # Classification tree
 ```{r}
