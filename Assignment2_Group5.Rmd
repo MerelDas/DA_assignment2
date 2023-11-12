@@ -129,13 +129,15 @@ To create a well performing model to predict sleep quality, it is important to c
 
 ### Correlation
 
-```{r}
-##Classification tree
 
+# Classification tree
+```{r}
 tree_mod <- rpart(Quality.of.Sleep ~ ., data = sleepdata)
 rpart.plot(tree_mod) #plot tree
+```
 
-##Random forest
+# Random forest
+```{r}
 rf_mod <- randomForest(Quality.of.Sleep ~ ., data = sleepdata)
 rf_mod
 importance <- importance(rf_mod)
@@ -146,8 +148,10 @@ tibble(
 ) %>% 
   ggplot(aes(x = variable, y = importance, fill = variable)) +
   geom_bar(stat = "identity")
+```
 
-#boosting
+# Boosting
+```{r}
 gbm_train <- train(Quality.of.Sleep ~ .,
                    data = sleepdata,
                    method = "gbm",
@@ -157,9 +161,9 @@ summary(gbm_train) #var importance plot
 predictions <- predict(gbm_train)
 
 ### PCA (of wa anders)
+```
 
 <<<<<<< HEAD
-```
 From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).
 =======
 >>>>>>> 728a474b78c4895536e7678d16eaa02d7f2b96e2
