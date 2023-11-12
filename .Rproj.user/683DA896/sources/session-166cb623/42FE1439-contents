@@ -1,0 +1,184 @@
+---
+title: "Assignment 1"
+output: html_document
+author: "Merel Das, Mirre Dona, Lukas Stemerdink"
+date: "2023-10-02"
+mainfont: Arial
+fontsize: 12pt
+urlcolor: blue
+---
+# load libraries and the dataset
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ISLR)
+library(tidyverse)
+library(haven)
+library(magrittr)
+#install.packages("ggmap")   # Uncomment if this package is not installed yet
+library(ggmap)
+library(RColorBrewer)
+
+```
+
+```{r dataset}
+# Read the dataset
+nyc_squirrels <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-10-29/nyc_squirrels.csv")
+```
+
+# Dataset description and motivation
+This analysis explores the dataset from the NYC squirrel census in 2018. In this project, over 300 volunteers counted and observed the squirrels living in New York Central Park. The dataset contains information about the 3,023 squirrel sightings, including location coordinates, age category, primary and secondary fur color, and activities.
+
+We picked this dataset because we thought the topic was fun and the dataset included many different variables. We were most interested in trying to plot the locations of the squirrels in the park, to see if there are any hotspots for spotting squirrels.
+
+To view the dataset, click [here](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-10-29).
+
+# Data cleaning
+## Check for duplicate data
+```{r, eval = FALSE}
+# Check if there are duplicate rows
+sum(duplicated(nyc_squirrels))
+
+# As sanity check, see if the squirrel IDs are all unique (they are not)
+duplicates <- nyc_squirrels %$% nyc_squirrels[duplicated(unique_squirrel_id),]
+
+# Look at rows of sightings with same ID
+for (row in 1:nrow(duplicates)){
+  nyc_squirrels %$% print(nyc_squirrels[unique_squirrel_id == duplicates[row,]$unique_squirrel_id,])
+}
+```
+There are 5 IDs that are recorded twice in the dataset. On inspecting these rows, we see that all values are the same except for the lat and long coordinates. We suspect that these were the same squirrels that were seen again by an observer in a short time and thus recorded twice. Since it is likely that there are multiple sightings of the same squirrel, by the same or different observers, we do not remove these rows from the dataset. We think this is likely as it would be difficult to keep the squirrels apart, especially when seen at different times or on different days. 
+
+## Variable selection
+From the 36 available variables, 20 were interesting for this exploration, the others were removed from the dataset. The ones that were kept include information about location, date, fur color, and activities of the squirrels. After inspecting the dataset, we decided to add a variable 'makes_sound' that indicates whether a squirrel was making any sound, and remove the information about which kind of sound (kuks, quaas, or moans) was made. This was done as there are not many sightings in general in which these sounds were made, so we aggregate these sightings.
+
+```{r}
+# Select variables
+nyc_squirrels %<>% select(long, lat, shift, date, age, primary_fur_color, highlight_fur_color, location, above_ground_sighter_measurement, running, chasing, climbing, eating, foraging, kuks, quaas, moans, approaches, indifferent, runs_from) %>% mutate(makes_sound = kuks | quaas | moans) %>% select(-kuks, -quaas, -moans)
+```
+# Squirrel fur color
+```{r colour, message = FALSE}
+squirrelPColours <- nyc_squirrels %>% 
+  drop_na(primary_fur_color, age) %>% 
+  filter(age != "?") %>% 
+  ggplot(aes(x = primary_fur_color, fill = age)) + 
+  geom_bar(position = "dodge") +
+  labs(x = "Primary fur color", y = "Count", fill = "Age") + theme_minimal()
+
+squirrelPColours
+```
+
+```{r hcolour, message = FALSE,  fig.width = 12, fig.height = 8}
+squirrelColorCount <- nyc_squirrels %>%  
+  drop_na(primary_fur_color, highlight_fur_color) %>% 
+  group_by(primary_fur_color,highlight_fur_color) %>% 
+  summarise(count = n()) %>% 
+  mutate(colorCount = sum(count))
+
+squirrelColorCount %>% 
+  ggplot(aes(x = primary_fur_color, y = (count/colorCount)*100, fill = highlight_fur_color)) + 
+  geom_col(position = "dodge") +
+  labs(x = "Primary fur colour", y = "Percentage (%)", fill = "Highlight fur colour", title = "Percentage highlight fur colour per primary fur colour") +
+  scale_fill_manual("Highlight fur colour", values = c("Black" = "black", "Black, Cinnamon" = "#800816", "Black, Cinnamon, White" = "tan3", "Black, White" = "slategray", "Cinnamon" = "sienna3", "Cinnamon, White" = "darksalmon", "Gray" = "gray", "Gray, Black" = "darkslategray4", "Gray, White" = "lightsteelblue3", "White" = "beige")) + 
+  theme_minimal() +
+  theme(axis.text = element_text(size=12), 
+        axis.title = element_text(size=16),
+        plot.title = element_text(size=20))
+```
+
+```{r, warning = FALSE, message = FALSE, fig.width = 12, fig.height=8}
+replace_unknown <- nyc_squirrels %>% 
+  replace(is.na(.), "Unknown colour")
+
+(plot_color_locations <- qmplot(x = long, y = lat, data = replace_unknown, color = primary_fur_color, geom = "point", size=I(0.3), maptype = "toner-lite") +
+  ggtitle("Plot of locations of squirrels based on primary color") +
+  facet_wrap(~primary_fur_color) +
+  scale_colour_manual("Primary fur colour", values = c("Black" = "black", "Cinnamon" = "sienna", "Unknown colour" = "red", "Gray" = "#9999CC")) +
+  guides(color = guide_legend(override.aes = list(size=5))) +
+    labs(x = "Longitude", y = "Latitude") +
+    theme_minimal())
+```
+
+```{r, warning = FALSE, message = FALSE, fig.width = 12, fig.height=8}
+plot_locations <- nyc_squirrels %>% 
+  qmplot(x = long, y = lat, data = nyc_squirrels, size=I(0.7), maptype = "toner-lite") +
+  ggtitle("Plot of locations of squirrels") +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = 0.5) +
+  theme_light()+
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
+  labs(x = "Longitude", y = "Latitude", fill = "Squirrel density")
+
+plot_locations
+```
+
+# Squirrel activities
+For many of the sightings it was recorded if the squirrel was doing something, for example running or eating. In this section is explored which activities were most common among the sighted squirrels, and whether some activities were done more or less depending on the time of day. The exact time of the sightings were not recorded, but we do know whether it was in the AM or PM.
+
+```{r}
+# Select the activity and shift information from the dataset
+squirrel_activities <- nyc_squirrels %>% 
+  select(shift, running, chasing, climbing, eating, foraging, approaches, indifferent, runs_from,
+         makes_sound) %>% 
+  # Restructure the dataframe so that instead of each activity being it's own column we have a column
+  # ... with the activity names and a column with the counts
+  pivot_longer(cols = -shift, names_to ="activity") %>%
+  # Count the amount of times that activities were labeled TRUE for each activity per shift
+  group_by(shift, activity) %>% 
+  summarise(count = sum(value == TRUE), .groups = "drop") 
+head(squirrel_activities)
+```
+## Plotting the activity data
+First looking at the total amount of times that activities were performed, independent of time of day.
+```{r}
+# Plot the total counts of the squirrel activities
+squirrel_activities %>% 
+  ggplot(aes(x = reorder(activity, -count), y = count, fill = reorder(activity, -count))) + 
+  geom_col() + 
+  labs(x = "Activity", y = "Count", title = "Squirrel activities", fill = "Activity") + 
+theme_minimal() + 
+  theme(axis.text.x=element_text(angle=-15, margin = margin(0, unit = "cm"), hjust=-0.01), 
+        plot.title = element_text(hjust = 0.5))
+```
+
+From the plot is visible that there is a large difference in the frequency of the observed activities. The squirrels are most often observed being indifferent to humans and foraging. Then eating, running, running from something, and climbing are the most occured activities, for which the counts are all similar. The least observed activities are chasing, approaching humans, and making a sound. 
+
+Is there a difference in the amount of times that activities are performed based on the time of day?
+```{r}
+# Plot the counts of the squirrel activities in the AM vs PM
+squirrel_activities %>% ggplot(aes(x = reorder(activity, -count), y = count, fill = shift)) + 
+  geom_col(width=0.7, position="dodge") +
+  labs(x = "Activity", y = "Count", fill = "Shift", title = "Squirrel activities in AM vs PM") + 
+theme_minimal() + 
+  theme(axis.text.x=element_text(angle=-15, margin = margin(0, unit = "cm"), hjust=-0.01), 
+        plot.title = element_text(hjust = 0.5))
+```
+
+It seems like most activities are performed more often in the PM than in the AM, but it might be that there are just more sightings in general in the PM. 
+```{r}
+nyc_squirrels %>% ggplot(aes(x=shift, fill = shift)) + geom_bar() + theme_minimal()
+```
+There are indeed more squirrel sightings in the PM shift than in the AM shift. This means that the observed activity counts should be normalized to know whether some activities are performed relatively more often in the AM or PM.
+```{r}
+# Compute the relative frequencies of the activities by normalizing the counts for each activity by the total number of sightings in the respective shift. Multiply the frequencies by 100 to express as percentage
+squirrel_activities %<>% 
+mutate(shift_size = ifelse(
+    shift == "AM", 
+    sum(nyc_squirrels$shift == "AM"), 
+    sum(nyc_squirrels$shift == "PM"))) %>% 
+  mutate(percent_count = (count/shift_size)*100) %>% 
+  select(-shift_size)
+
+# Plot the percentages of activity observations
+squirrel_activities %>% ggplot(aes(x = reorder(activity, -percent_count), y = percent_count, fill = shift)) + 
+  geom_col(width=0.7, position="dodge") +
+  labs(x = "Activity", y = "Relative frequency (%)", fill = "Shift", title = "Relative frequencies of squirrel activities in AM vs PM") +
+theme_minimal() +
+  theme(axis.text.x=element_text(angle=-15, margin = margin(0, unit = "cm"), hjust=-0.01), 
+        plot.title = element_text(hjust = 0.5))
+```
+From the relative frequencies it's visible that squirrels seem to be more indifferent to humans and climb more in the AM than in the PM. And that squirrels seem to forage and eat more in the PM than the AM. For the other activities there is also a difference in the relative counts for AM and PM but much smaller. 
+
+# Caution
+Of course this exploratory analysis only gives an indication of the characteristics of squirrels in New York Central Park. It cannot be known whether the data is absolutely true. For example, it might seem that there are few black squirrels because they are good at hiding, and squirrels seem to climb more in the AM since the observers focused on the trees more in that shift. But at least the recorded data points in these directions and allows us to come up with hypotheses about the data to be tested. 
+
+
+
