@@ -1,0 +1,273 @@
+---
+title: "Answers SLV Exam 2023"
+author: "Mirre Dona [6156630]"
+date: "07/11/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, out.width = "100%")
+```
+
+## Theoretical part
+
+### Q1
+
+- Aesthetics: x = planting data, y = vitamin C content per kg. 
+- Geoms: the shapes are the different types of cabbage, the colors correspond with the date.
+- Scales: x-axis: continuous scale, y-axis: continous scale. color: discrete scale, shape: discrete scale.
+- Facets: there are not facets used.
+- Statistical transformations: there is no statistical transformation.
+- Coordinate systems: there is no special coordinate system. 
+
+### Q2 
+The plot may mislead the readers since the scales on the y-axis are not the same on the right hand as on the left hand. Besides, the left y-axis does not start at 0, this makes the difference between the two lines look bigger than it actually is and makes it hard to compare. 
+
+The plot should be changed by making the scales on the y-axis the same on the left and right hand. Besides, both y-axis should start at 0.
+
+### Q3 
+This plot can be misleading since on the x-axis the bars are not equally wide. This makes it hard to compare the bars. Besides, the y-axis does not start at 0, but is turned the other way around. 
+The plot could be changed by changing the dimension of the y-axis and making the width of each bar on the x-axis the same size. Also, an indication of the least number of murders committed using firearms could be indicated, now only the one of 2005 has been indicated but this was not the least number of murders committed using firearms.
+
+### Q4
+__a)__ 
+The advantages of a regression tree in comparison to common regression models are that regression trees are easy to interpret and understand by humans. Besides, it is easy to handle missing values and outliers. And it can handle non-linear relationships between the predictor and target variable. Also, it is not necessary to transform the data.
+
+The disadvantages of a regression tree in comparison to common regression models are that regression trees are not as accurate as other regression models. Besides, regression trees are prone to overfitting. Also, it is not possible to predict further than the training data.
+
+__b)__ 
+Variables are selected in a regression tree by looking at the variable that gives the best split (that best reduces the MSE in each subset) Then, the variable that gives the second best split is selected, and so on. A variable is splitted based on probabilities with a baseline at 0.5. 
+
+In the table, Fold7 has the lowest MSE, so this fold is most important and will be done first. Then Fold3 is most important, and so on. Fold5 will be done last, since that fold has the highest MSE.
+
+The regression tree will be built based on the variable that gives the best split. The best splits are determined based on the least MSE. Different thresholds will be considered for each variable split. It needs to take into account how well the splits separate the data into groups with similar gorilla life expectancy values. 
+
+__c)__ 
+The random forest technique will use multiple decision trees to make predictions. In the example 7-folds cross-validation is used, so the data has been splitted into 7 subsets. The folds with the lowest MSE will fit best. An overall MSE could be calculated by taking the average of the MSE of each fold.
+(If the avg MSE is lower than the MSE of the regression tree, the random forest technique is better.)
+
+
+## Practical part
+
+### Q5
+```{r q5_packages}
+library(MASS)
+library(tidyverse)
+library(splines)
+```
+
+__a)__ 
+
+```{r q5a}
+# Load the dataset
+bikesales <- read.csv("Data/bikesales.csv")
+View(bikesales)
+
+# Randomly split the data into a training set (75%) and a test set (25%). Use the training set for EDA and model development.
+set.seed(123)
+
+train <- sample(1:nrow(bikesales), 0.75*nrow(bikesales)) # 75% of the rows for the training set.
+train_data <- bikesales[train,]
+test_data <- bikesales[-train,] #use the other 25% of the rows for the test set.
+
+#EDA
+summary(train_data)
+
+bikesales %>% 
+  ggplot(aes(x = temperature, y = bikesales, col = rainfall)) +
+  geom_point() +
+  labs(x = "temperature", y = "bikesales") +
+  theme_minimal()
+
+train_data %>% 
+  ggplot(aes(x = temperature, y = bikesales, col = rainfall)) +
+  geom_point() +
+  labs(x = "temperature", y = "bikesales") +
+  theme_minimal()
+
+```
+
+```{r}
+#illustrate the random split worked
+nrow(train_data)
+nrow(test_data)
+
+```
+As can be seen, 75% of the rows are in the train_data and 25% of the rows in the test_data.
+
+__b)__ 
+
+```{r q5b}
+bikesales %>% 
+  ggplot(aes(x = weekday, y = bikesales))+
+  geom_line(colour = "lightgreen", size = 1)+
+  theme_minimal()
+
+# It can be seen that on Saturday the most bikes are sold and on Wednesday the least bikes.
+```
+
+```{r}
+bikesales %>% 
+  ggplot(aes(x = year, y = bikesales))+
+  geom_point(size = 2)+
+  theme_minimal()
+
+#bikesales %>% 
+    #ggplot(aes(x = year))+
+    #geom_histogram(binwidth = 0.3)+
+    #labs(x= "year") +
+    #theme_minimal()
+
+# it can be seen that most bikes are sold in 2015. 
+```
+
+
+__c)__
+last one should have 5 degrees of freedom
+
+```{r q5c}
+# we assume a non-linear relationship between temperature and bike sales, so I will use glm(). 
+
+poly_mod3 <- glm(bikesales ~ poly(temperature, 3), data = train_data)
+poly_mod4 <- glm(bikesales ~ poly(temperature, 4), data = train_data)
+poly_mod5 <- glm(bikesales ~ poly(temperature, 5), data = train_data)
+ns_mod3 <- glm(bikesales ~ ns(temperature, 3), data = train_data)
+ns_mod4 <- glm(bikesales ~ ns(temperature, 4), data = train_data)
+ns_mod5 <- glm(bikesales ~ ns(temperature, 5), data = train_data)
+```
+
+
+__d)__
+
+```{r q5d, echo=False}
+summary(poly_mod3)
+summary(poly_mod4)
+summary(poly_mod5)
+summary(ns_mod3)
+summary(ns_mod4)
+summary(ns_mod5)
+
+
+```
+
+```{r}
+
+```
+
+[Your answer here]
+
+
+__e)__
+
+if R^2 equals zero, this means that the model does not explain the variance of the data around the mean. The model does not fit the data well. 
+
+
+__f)__
+
+```{r q5f}
+pred_plot <- function(model) {
+# First create predictions for all values of lstat
+x_pred <- seq(min(bikesales$bikesales), max(bikesales$bikesales), length.out = 500)
+y_pred <- predict(model, newdata = tibble(temperature = x_pred))
+# Then create a ggplot object with a line based on those predictions
+bikesales %>%
+ggplot(aes(x = bikesales, y = temperature)) +
+geom_point() +
+geom_line(data = tibble(bikesales = x_pred, temperature = y_pred), size = 1, col = "blue") +
+theme_minimal()
+}
+
+library(cowplot)
+plot_grid(
+pred_plot(poly_mod3) + ggtitle("Polynomial 3"),
+pred_plot(poly_mod4) + ggtitle("Polynomial 4"),
+pred_plot(poly_mod5) + ggtitle("Polynomial 5"),
+pred_plot(ns_mod3) + ggtitle("Natural spline 3"),
+pred_plot(ns_mod4) + ggtitle("Natural spline 4"),
+pred_plot(ns_mod5) + ggtitle("Natural spline 5")
+)
+```
+
+[Your answer here]
+
+
+__g)__
+
+```{r q5g}
+# [Your code here]
+```
+
+[Your answer here]
+
+__h)__
+
+```{r q5h}
+# [Your code here]
+```
+
+[Your answer here]
+
+### Q6
+
+__a)__ 
+
+```{r q6a}
+haberman <- read.csv("Data/haberman.csv")
+View(haberman)
+
+model <- glm(survival~., data= haberman, family = binomial)
+
+predicted <- predict(model, type = "response")
+
+predict_class <- ifelse(predicted > 0.5, 1, 0)
+
+cmatrix <- table(true = haberman$survival, predicted = predict_class)
+cmatrix
+
+TN <- cmatrix[1, 1]
+FN <- cmatrix[2, 1]
+FP <- cmatrix[1, 2]
+TP <- cmatrix[2, 2]
+
+tibble(
+Acc = (TP + TN) / sum(haberman),
+TPR = TP / (TP + FN),
+TNR = TN / (TN + FP),
+FPR = FP / (TN + FP),
+PPV = TP / (TP + FP),
+NPV = TN / (TN + FN)
+)
+
+```
+
+
+__b)__
+
+```{r q6b}
+F_score <- ((1 + 3^2) * TP) / ((1 + 3^2) * TP + 3^2 * FN + FP)
+F_score #0.9319463, so the model is rather good at predicting the survival of the patients. 93% of the patients are correctly classified.
+
+```
+
+
+__c)__
+
+```{r q6c}
+#Find the ideal prediction threshold that maximizes the F3-Score for our model. Compare this prediction rule with a baseline prediction rule that ignores all features and simply optimizes the F3-Score itself. 
+
+
+```
+
+Conclusions: 
+
+__d)__
+
+```{r q6d}
+haberman %>% 
+  ggplot(aes(x = age, y = year)) +
+  geom_point(fill = predict_class) +
+  theme_minimal() +
+  facet_grid(cols = vars(predict_class)) 
+```
+
+[Your answer here]
