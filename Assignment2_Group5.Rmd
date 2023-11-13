@@ -159,7 +159,7 @@ We decided not to go with support vector machines as it is most effective when t
 
 This is also the reason why we do not think KNN will be a good method, as this method works best for well-defined clusters.
 
-LDA is an effective method for multi-class identification. 
+LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. 
 
 We chose to try random forest as this technique is robust, handles non-linear relationships well, and can capture complex interactions in the data. It is also good at finding the most informative predicors in the set without having to specify them. 
 
