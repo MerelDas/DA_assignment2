@@ -213,7 +213,8 @@ tree_mod <- rpart(Quality.of.Sleep ~ ., data = train_data, method = "class") #me
 rpart.plot(tree_mod, yesno=2) # Yes/no at each split.
 
 ```
-As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is predicted correctly in all cases. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7). Moreover, the tree does not use all variables; only Stress.Level, Occupation, and Sleep.Duration are used (3 out of 11 variables). This means that these variables are the strongest contributors to predicting. Quality.of.Sleep. 
+
+As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is predicted correctly in all cases. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7). Moreover, the tree does not use all variables; only Stress.Level, Occupation, and Sleep.Duration are used (3 out of 11 variables). This means that these variables are the strongest contributors to predicting Quality.of.Sleep. 
 
 By letting the splits continue until all cases are classified, we could generate a tree with all predictors. However, this model will have too much variance to perform well on new samples (imposing a unfavourable bias/variance tradeoff). So we disregard that model, as it is likely to overfit the data. 
 
@@ -233,28 +234,17 @@ confusionMatrix(class_predicted, reference = test_data$Quality.of.Sleep)
 
 The accuracy of the model is 0.8723. The model is good at predicting a sleep quality of 9, but not at all at predicting a sleep quality of 4 or 5. 
 
-The next step is to try to improve the model. We will try to improve the model by tuning the parameters. Gini and information are two different ways to measure the impurity of the nodes.
+The next step is to try to improve the model. We will try to improve the model by tuning the parameters. Gini-splitting and information-splitting are two different ways to measure the impurity of the nodes. As gini-splitting is the default, we are now rebuilding the decision tree using information-splitting to compare the accuracy.
 
 ```{r}
 # Model accuracy
 accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted) # Outcome: 0.8723404
-
-# Model training based on gini-splitting
-tree_mod_gini <- rpart(Quality.of.Sleep ~ .,
-                       data = train_data, 
-                       method = "class", 
-                       parms = list(split = "gini")) # split = gini means that the split is based on the impurity of the nodes.
 
 # Model training based on information splitting.
 tree_mod_info <- rpart(Quality.of.Sleep ~ .,
                        data = train_data, 
                        method = "class", 
                        parms = list(split = "information")) # split = information means that the split is based on the information gain of the nodes.
-
-# Class predictions with gini-based splitting
-pred <- predict(tree_mod_gini,
-                newdata = test_data, 
-                type = "class")
 
 # Class prediction with information-based splitting
 pred2 <- predict(tree_mod_info,
@@ -266,42 +256,18 @@ pred2 <- predict(tree_mod_info,
 The data of the classification accuracy on the test data will be compared for the two models. 
 ```{r}
 # Compare classification accuracy on test data
-accuracy(actual = test_data$Quality.of.Sleep, predicted = pred) # Outcome is 0.8723404
-
 accuracy(actual = test_data$Quality.of.Sleep, predicted = pred2) # Outcome is 0.9148936
 
-rpart.plot(x = tree_mod_gini, yesno = 2, extra = 0, type = 0)
+rpart.plot(x = tree_mod_info, yesno = 2)
 ```
 
 The accuracy of the model based on gini-splitting is 0.8723, and the accuracy of the model based on information-splitting is 0.9149. The model based on information-splitting is better at predicting the sleep quality of the test data.
 
-### Tree pruning 
-The next step is to prune the tree. Pruning is a technique in machine learning that reduces the size of decision trees by removing sections of the tree that provide little power to classify instances. Pruning reduces the complexity of the final classifier, and hence improves predictive accuracy by the reduction of overfitting.
-
-```{r}
-plotcp(tree_mod_gini)
-print(tree_mod_gini$cptable)
-
-index <- which.min(tree_mod_gini$cptable[,"xerror"]) # Outcome: 4 4
-cp_optimal <- tree_mod_gini$cptable[index, "CP"] # Outcome: 0.02051282
-
-tree_mod_pruned <- prune(tree_mod_gini, cp = cp_optimal)
-
-# Plot optimized model
-rpart.plot(tree_mod_pruned, yesno = 2, extra = 0, type = 0)
-```
-```{r}
-pred3 <- predict(tree_mod_pruned,
-                 newdata = test_data, 
-                 type = "class")
-
-accuracy(actual = test_data$Quality.of.Sleep, predicted = pred3) # Outcome is 0.8510638
-```
-The accuracy of the pruned model is 0.8511. This is lower than the accuracy of the model based on information-splitting.
+As the tree is relatively small and not overly complex, we do not prune it
 
 # Complex model selection
 Our simple model, a single decision tree, is prone to overfit on the training data. To improve upon this model, we tried random forest and boosting, as these are ensemble methods that combine predictions of multiple trees. This helps reduce overfitting by aggregating the results of multiple models, leading to more robust generalization to unseen data. This also means they are less sensitive to noise and outliers in the data. 
-Decision trees might not always effectively prioritize and select the most important features, as they work top-down and greedy. Random Forest and boosting methods provide a more reliable measure of feature importance by considering the collective contribution of features across multiple trees.
+Decision trees might not always effectively prioritize and select the most important features, as they work top-down and are greedy. Random Forest and boosting methods provide a more reliable measure of feature importance by considering the collective contribution of features across multiple trees.
 Decision trees also may struggle with imbalanced datasets, favoring the majority class.
 While boosting methods in particular can assign higher weights to misclassified instances, helping address class imbalances more effectively.
 So overall, Random Forest and Boosting have many advantages compared to decision trees.
@@ -309,7 +275,7 @@ So overall, Random Forest and Boosting have many advantages compared to decision
 ## Random forest
 Let's train a random forest model on the training data, and predict the labels of the test data.
 ```{r}
-cvcontrol <- trainControl(method = "repeatedcv", #cross validation
+cvcontrol <- trainControl(method = "repeatedcv", # Cross validation
                           number = 10,
                           allowParallel = TRUE)
 rf_train <- train(Quality.of.Sleep ~ .,
@@ -321,46 +287,47 @@ rf_train <- train(Quality.of.Sleep ~ .,
 rf_test  <- predict(rf_train, newdata = test_data)
 ```
 
-As the structure information of the trees is lost when averaging multiple trees, we can inspect which predictors were most informative by plotting the variable importance. 
+As the structure information of the trees is lost when averaging multiple trees, we can inspect which predictors were most informative by plotting the variable importance. The variable importance was returned per level of the response variable, so the values were averaged over the levels. 
+
 ```{r}
 data.frame(varImp(rf_train)$importance) %>% 
-  mutate(avg_Importance = rowMeans(.), names=row.names(.)) %>% #mean of varImp for each response level
+  mutate(avg_Importance = rowMeans(.), names=row.names(.)) %>% # Mean of varImp for each response level
   ggplot(aes(x=reorder(names, avg_Importance), y=avg_Importance)) + 
   geom_bar(stat = "identity") + 
   coord_flip() + 
   theme_minimal() + 
-  labs(title="Variable importance plot")
+  labs(title="Variable importance plot", x = "Average importance", y = "Names of predictors")
 ```
-The most important predictors for the random forest model are sleep duration and stress level. This is different (or not?) than the predictors used in the single decision tree.
+
+The most important predictors for the random forest model are sleep duration and stress level. This is the same as the predictors used in the single decision tree.
 
 ### Evaluation random forest
 To evaluate whether this model is better than the simple model, we create a confusion matrix again and calculate relevant metrics.
 ```{r}
 confusionMatrix(rf_test, test_data$Quality.of.Sleep)
 ```
-The performance of the random forest model is very good, with an accuracy of 97% on the test data.
-ROC/AUC?
+The performance of the random forest model is very good, with an accuracy of 96.81% on the test data. The sensitivity and specificity are high as well, as can be seen in the statistics of the confusion matrix. 
 
 ## Boosting
 A boosting model is different from Random Forest, it builds a decision tree sequentially, based on the residuals from each previous model. Let's see if a boosting model performs even better.
-```{r}
+```{r, warning=FALSE}
 gbm_train <- train(Quality.of.Sleep ~ .,
                    data = train_data,
                    method = "gbm",
                    verbose = F, 
                    trControl = cvcontrol)
 
-summary(gbm_train) #var importance plot
-
-gbm_test <- predict(gbm_train, newdata = test_data)
+summary(gbm_train, plotit = FALSE) # Var importance plot
 ```
+
 Sleep duration and stress level are again the most important predictors.
 
 ### Evaluation boosting
 ```{r}
+gbm_test <- predict(gbm_train, newdata = test_data)
 confusionMatrix(gbm_test, test_data$Quality.of.Sleep)
 ```
-The boosting model is only slightly better than the Random Forest model. The difference is so small that it is probably just random variation.
+The boosting model is only slightly better than the Random Forest model, the accuracy is 0.9787. The difference is so small that it is probably just random variation.
 
 # Conclusions
 
