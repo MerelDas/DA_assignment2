@@ -354,7 +354,7 @@ ROC/AUC?
 A boosting model is different from Random Forest, it builds a decision tree sequentially, based on the residuals from each previous model. Let's see if a boosting model performs even better.
 ```{r}
 gbm_train <- train(Quality.of.Sleep ~ .,
-                   data = sleepdata,
+                   data = train_data,
                    method = "gbm",
                    verbose = F, 
                    trControl = cvcontrol)
@@ -363,13 +363,15 @@ summary(gbm_train) #var importance plot
 
 gbm_test <- predict(gbm_train, newdata = test_data)
 ```
-
+Sleep duration and stress level are again the most important predictors.
 
 ### Evaluation boosting
-accuracy? roc/auc? -> see week 6
 ```{r}
-confusionMatrix(preds, labels)
+confusionMatrix(gbm_test, test_data$Quality.of.Sleep)
 ```
+The boosting model is only slightly better than the Random Forest model. The difference is so small that it is probably just due to random chance.
+
+#conclusions
 
 
 
