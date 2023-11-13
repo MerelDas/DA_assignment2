@@ -165,11 +165,19 @@ melted_corr_mat <- melt(corr_mat)
 # plotting the correlation heatmap
 ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()+ theme(axis.text.x=element_text(angle=-15, hjust=-0.01))  + geom_text(aes(Var2, Var1, label = value), color = "white", size = 2)
 ```
-The variable sleep duration is the most correlated with sleep quality. 
-
+The variable sleep duration is the most correlated with sleep quality.
 
 ## Simple model selection
-The classification models we considered for this prediction problem are ...
+As a model for this prediction problem we considered decision trees (including bagging, boosting, and random forest), support vector machines, LDA, and K-nearest neighbors, since these are the methods we studied in the course for multi-class classification.
+
+We decided not to go with support vector machines as it is most effective when there is a clear margin of separation between classes, and we don't think this will be the case for this dataset. Although we transformed the response variable to a factor, we know there is actually an ordinal structure in the variable. The ratings are also subjective, so it could for example be that some people rated their sleep quality a 6, while others would rate it 5 or 7. This means the classes are probably overlapping.
+
+This is also the reason why we do not think KNN will be a good method, as this method works best for well-defined clusters.
+
+LDA is an effective method for multi-class identification. 
+
+We chose to try random forest as this technique is robust, handles non-linear relationships well, and can capture complex interactions in the data. It is also good at finding the most informative predicors in the set without having to specify them. 
+
 
 ### Train, dev, test
 First we split the data in training, validation, and test data
