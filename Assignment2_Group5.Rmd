@@ -161,34 +161,6 @@ Lastly, looking at how the BMI category impacts the quality of sleep, people wit
 # Prediction model
 As described above, the response variable we chose to predict is quality of sleep. This is a (transformed) categorical variable with possible values 1 through 10.
 
-## Feature selection
-To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find which features are probably the most useful for predicting sleep quality, we do a short correlation analysis.
-
-### Correlation
-```{r}
-cordata <- sleepdata %>% 
-  mutate(Gender   = as.numeric(Gender),
-         Occupation = as.numeric(Occupation),
-         BMI.Category = as.numeric(BMI.Category),
-         Sleep.Disorder = as.numeric(Sleep.Disorder),
-         Blood.Pressure = as.numeric(Blood.Pressure))
-
-
-#create correlation matrix
-corr_mat <- round(cor(cordata),2)
-
-# Reduce the size of correlation matrix
-melted_corr_mat <- melt(corr_mat)
-
-# Plot the correlation heat map
-ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
-```
-
-# plotting the correlation heatmap
-ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()+ theme(axis.text.x=element_text(angle=-15, hjust=-0.01))  + geom_text(aes(Var2, Var1, label = value), color = "white", size = 2)
-```
-The variable sleep duration is the most correlated with sleep quality.
-
 ## Simple model selection
 As a model for this prediction problem we considered decision trees (including bagging, boosting, and random forest), support vector machines, LDA, and K-nearest neighbors, since these are the methods we studied in the course for multi-class classification.
 
@@ -211,64 +183,6 @@ train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for t
 train_data <- sleepdata[train,]
 test_data <- sleepdata[-train,] # Use the other 25% of the rows for the test set.
 
-```
-
-```{r}
-# Train a simple linear regression model on the training set of Quality of sleep
-simple_model <- lm(Quality.of.Sleep ~ ., data = train_data)
-
-# Make predictions on the test set
-simple_predictions <- test_train %>% 
-  mutate(Blood.Pressure = )
-  predict(simple_model, newdata = test_data)
-```
-
-# R function to generate all formulas up to size n
-# Erik-Jan van Kesteren
-# October 2018
-
-# Input : 
-#  p      : number of variables 
-#  x_vars : character vector of x vars
-#  y_var  : character of y var
-
-# Output: character vector of formulas
-```{r}
-generate_formulas <- function(p, x_vars, y_var) {
-  # Input checking
-  if (p %% 1 != 0)           stop("Input an integer n")
-  if (p > length(x_vars))    stop("p should be smaller than number of vars")
-  if (!is.character(x_vars)) stop("x_vars should be a character vector")
-  if (!is.character(y_var))  stop("y_vars should be character type")
-  
-  # combn generates all combinations, apply turns them into formula strings
-  apply(combn(x_vars, p), 2, function(vars) {
-    paste0(y_var, " ~ ", paste(vars, collapse = " + "))
-  })
-}
-```
-
-### PCA (of wa anders)
-
-## Simple model selection
-### Train, dev, test
-```{r}
-#train, test, etc.
-set.seed(123)
-train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set.
-train_data <- sleepdata[train,]
-test_data <- sleepdata[-train,] #use the other 25% of the rows for the test set.
-
-#EDA
-summary(train_data)
-
-# Train a simple linear regression model
-simple_model <- lm(Quality.of.Sleep ~ ., data = train_data)
-
-# Make predictions on the test set
-simple_predictions <- test_train %>% 
-  mutate(Blood.Pressure = )
-  predict(simple_model, newdata = test_data)
 ```
 
 ### Train model
