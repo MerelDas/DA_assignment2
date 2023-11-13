@@ -49,7 +49,7 @@ md.pattern(sleepdata)
 There is no missing data in this dataset!
 
 ## Transform variable types
-Let's convert the variables to the right type for exploration and prediction later on.
+Let's convert the variables to the right type for exploration and prediction later on. We chose to transform the sleep quality (a scale from 10 - 10) to a factor, as we have found in literature that for ratings with a narrow range, classification techniques often work better than regression. [1](https://aclanthology.org/W10-1205.pdf)[2](https://towardsdatascience.com/1-to-5-star-ratings-classification-or-regression-b0462708a4df)
 ```{r}
 #check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
 unique(sleepdata$Occupation)
@@ -61,12 +61,17 @@ sleepdata %<>%
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
          BMI.Category = as.factor(BMI.Category),
+<<<<<<< HEAD
          Sleep.Disorder = as.factor(Sleep.Disorder)) %>% 
   separate_wider_delim(cols = Blood.Pressure, delim = "/", names = c("Systolic", "Diastolic")) %>% 
   mutate(Blood.Reading = ifelse(
     test = Systolic >= 130 & Diastolic >= 90, yes = "High", no = ifelse(
       test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
     )))
+=======
+         Sleep.Disorder = as.factor(Sleep.Disorder),
+         Quality.of.Sleep = as.factor(Quality.of.Sleep))
+>>>>>>> b274dfa2d9ec4f07dfb627e5ca9cc81b44114b4a
 ```
 !!nog iets doen met blood pressure
 
@@ -141,7 +146,7 @@ sleepdata %>%
 Lastly, looking at how the BMI category impacts the quality of sleep, people with lower weight seem to sleep better than heavier people. 
 
 # Prediction model
-As described above, the response variable we chose to predict is quality of sleep. This response variable is a numerical variable with possible integer values 1 through 10. We considered converting this to a categorical variable 
+As described above, the response variable we chose to predict is quality of sleep. This is a (transformed) categorical variable with possible values 1 through 10.
 
 ## Feature selection
 To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find which features are probably the most useful for predicting sleep quality, we do a short correlation analysis.
@@ -169,7 +174,10 @@ The variable sleep duration is the most correlated with sleep quality.
 
 
 ## Simple model selection
+The classification models we considered for this prediction problem are ...
+
 ### Train, dev, test
+First we split the data in training, validation, and test data
 ```{r}
 #train, test, etc.
 set.seed(123)
@@ -177,41 +185,6 @@ train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for t
 train_data <- sleepdata[train,]
 test_data <- sleepdata[-train,] #use the other 25% of the rows for the test set.
 
-```
-
-```{r}
-# Train a simple linear regression model
-simple_model <- lm(Quality.of.Sleep ~ ., data = train_data)
-
-# Make predictions on the test set
-simple_predictions <- test_train %>% 
-  mutate(Blood.Pressure = )
-  predict(simple_model, newdata = test_data)
-```
-
-# R function to generate all formulas up to size n
-# Erik-Jan van Kesteren
-# October 2018
-
-# Input : 
-#  p      : number of variables 
-#  x_vars : character vector of x vars
-#  y_var  : character of y var
-
-# Output: character vector of formulas
-```{r}
-generate_formulas <- function(p, x_vars, y_var) {
-  # Input checking
-  if (p %% 1 != 0)           stop("Input an integer n")
-  if (p > length(x_vars))    stop("p should be smaller than number of vars")
-  if (!is.character(x_vars)) stop("x_vars should be a character vector")
-  if (!is.character(y_var))  stop("y_vars should be character type")
-  
-  # combn generates all combinations, apply turns them into formula strings
-  apply(combn(x_vars, p), 2, function(vars) {
-    paste0(y_var, " ~ ", paste(vars, collapse = " + "))
-  })
-}
 ```
 
 ### Train model
