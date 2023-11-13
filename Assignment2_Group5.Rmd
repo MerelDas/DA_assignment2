@@ -38,7 +38,7 @@ library(Metrics) # For accuracy metric
 # Import dataset
 ```{r}
 sleepdata <- read.csv('data/Sleep_health_and_lifestyle_dataset.csv')
-head(sleepdata)
+head(sleepdata) 
 ```
 
 # Description of the data
@@ -69,7 +69,7 @@ Before we begin, the data should be cleaned for proper use.
 
 ## Missing data
 ```{r}
-md.pattern(sleepdata, rotate.names = TRUE)
+md.pattern(sleepdata, rotate.names = TRUE) # Check for missing data
 ```
 There is no missing data in this dataset.
 
@@ -144,6 +144,7 @@ plot_sleepdata2
 
 As can be seen in the box plot above, generally, the sleep quality increases as sleep duration increases. 
 ```{r}
+# Create a boxplot showing sleep quality by gender
 ggplot(sleepdata, aes(x = Gender, y = as.numeric(Quality.of.Sleep))) +
   geom_boxplot(fill = "lightblue") +
   theme_minimal() +
@@ -153,6 +154,7 @@ ggplot(sleepdata, aes(x = Gender, y = as.numeric(Quality.of.Sleep))) +
 Moreover, women seem to have a higher quality of sleep on average compared to men. To compare the quality of sleep to itself in a boxplot, it has to be converted back to a numeric value. 
 
 ```{r}
+# Showing median, min and max sleep duration per occupation
 sleepdata %>% 
   group_by(Occupation) %>%
   summarise( 
@@ -162,9 +164,10 @@ sleepdata %>%
   )
 ```
 
-Then, looking at the median, min, max, and median absolute deviation sleep duration per occupation, it can be seen that Sales Representatives sleep the least on average, followed by Scientist. Though the variation is not very strong per occupation, there is some variance. 
+Then, looking at the median, min, and max sleep duration per occupation, it can be seen that Sales Representatives sleep the least on average, followed by Scientist. Though the variation is not very strong per occupation, there is some variance. 
 
 ```{r}
+# Create a boxplot showing sleep quality by BMI category
 sleepdata %>% 
   ggplot(aes(x = BMI.Category, y = as.numeric(Quality.of.Sleep))) + 
   scale_x_discrete(limits = c("Normal", "Normal Weight", "Overweight", "Obese")) +
@@ -194,6 +197,7 @@ First we split the data in training, and test data. For tree generation, we remo
 ```{r}
 set.seed(123)
 
+# Create a new dataset without Diastolic and Systolic
 sleepdatatree <- sleepdata %>% 
   select(-Diastolic, -Systolic)
 
@@ -260,6 +264,7 @@ The data of the classification accuracy on the test data will be compared for th
 # Compare classification accuracy on test data
 accuracy(actual = test_data$Quality.of.Sleep, predicted = pred2) 
 
+# Plot tree
 rpart.plot(x = tree_mod_info, yesno = 2)
 ```
 
@@ -277,7 +282,8 @@ So overall, Random Forest and Boosting have many advantages compared to decision
 ## Random forest
 Let's train a random forest model on the training data, and predict the labels of the test data.
 ```{r}
-cvcontrol <- trainControl(method = "repeatedcv", # Cross validation
+# Create parameters for Random Forest model
+cvcontrol <- trainControl(method = "repeatedcv", 
                           number = 10,
                           allowParallel = TRUE)
 rf_train <- train(Quality.of.Sleep ~ .,
@@ -286,12 +292,14 @@ rf_train <- train(Quality.of.Sleep ~ .,
                   trControl = cvcontrol,
                   importance = TRUE)
 
+# Predict labels of test data
 rf_test  <- predict(rf_train, newdata = test_data)
 ```
 
 As the structure information of the trees is lost when averaging multiple trees, we can inspect which predictors were most informative by plotting the variable importance. The variable importance was returned per level of the response variable, so the values were averaged over the levels. 
 
 ```{r}
+# Plot variable importance
 data.frame(varImp(rf_train)$importance) %>% 
   mutate(avg_Importance = rowMeans(.), names=row.names(.)) %>% # Mean of varImp for each response level
   ggplot(aes(x=reorder(names, avg_Importance), y=avg_Importance)) + 
@@ -306,6 +314,7 @@ The most important predictors for the random forest model are sleep duration and
 ### Evaluation random forest
 To evaluate whether this model is better than the simple model, we create a confusion matrix again and calculate relevant metrics.
 ```{r}
+# Create a confusion matrix
 confusionMatrix(rf_test, test_data$Quality.of.Sleep)
 ```
 The performance of the random forest model is very good, with an accuracy of 96.81% on the test data. The sensitivity and specificity are high as well, as can be seen in the statistics of the confusion matrix. 
@@ -313,20 +322,25 @@ The performance of the random forest model is very good, with an accuracy of 96.
 ## Boosting
 A boosting model is different from Random Forest, it builds a decision tree sequentially, based on the residuals from each previous model. Let's see if a boosting model performs even better.
 ```{r, warning=FALSE}
+# Train boosting model
 gbm_train <- train(Quality.of.Sleep ~ .,
                    data = train_data,
                    method = "gbm",
                    verbose = F, 
                    trControl = cvcontrol)
 
-summary(gbm_train, plotit = FALSE) # Var importance plot
+# Summary to see the importance of the predictors
+summary(gbm_train, plotit = FALSE) 
 ```
 
 Sleep duration and stress level are again the most important predictors.
 
 ### Evaluation boosting
 ```{r}
+# Prediction of test data
 gbm_test <- predict(gbm_train, newdata = test_data)
+
+# Create a confusion matrix
 confusionMatrix(gbm_test, test_data$Quality.of.Sleep)
 ```
 
