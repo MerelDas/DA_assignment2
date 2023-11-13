@@ -95,7 +95,8 @@ sleepdata %<>%
       test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
     ))) %>% 
   mutate(Systolic = as.numeric(Systolic)) %>% 
-  mutate(Diastolic = as.numeric(Diastolic))
+  mutate(Diastolic = as.numeric(Diastolic)) %>% 
+  mutate(Blood.Reading = as.factor(Blood.Reading))
 ```
 
 ## Select variables
@@ -212,7 +213,7 @@ tree_mod <- rpart(Quality.of.Sleep ~ ., data = train_data, method = "class") #me
 rpart.plot(tree_mod, yesno=2) # Yes/no at each split.
 
 ```
-As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is predicted correctly in all cases. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7.)
+As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is predicted correctly in all cases. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7). Moreover, the tree does not use all variables; only Stress.Level, Occupation, and Sleep.Duration are used (3 out of 11 variables). This means that these variables are the strongest contributors to predicting. Quality.of.Sleep. 
 
 ```{r}
 tree_full_mod <- rpart(Quality.of.Sleep ~., sleepdatatree, control = rpart.control(minbucket = 1, cp = 0))
@@ -234,9 +235,13 @@ class_predicted
 ```{r}
 # Generate confusion matrix for the test data
 confusionMatrix(class_predicted, reference = test_data$Quality.of.Sleep)
+```
+The accuracy of the model is 0.8723. The model is good at predicting a sleep quality of 9, but not at all at predicting a sleep quality of 4 or 5. 
+
+```{r}
 
 ```
-The accuracy of the model is 0.8723. The model is good at predicting a sleep quality of 9, but not at all at predicting a sleep quality of 4 or 5.
+
 
 The next step is to try to improve the model. We will try to improve the model by tuning the parameters. Gini and information are two different ways to measure the impurity of the nodes.
 ```{r}
@@ -276,6 +281,7 @@ accuracy(actual = test_data$Quality.of.Sleep, predicted = pred2) # Outcome is 0.
 
 rpart.plot(x = tree_mod_gini, yesno = 2, extra = 0, type = 0)
 ```
+
 The accuracy of the model based on gini-splitting is 0.8723, and the accuracy of the model based on information-splitting is 0.9149. The model based on information-splitting is better at predicting the sleep quality of the test data.
 
 ### Tree pruning 
