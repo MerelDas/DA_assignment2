@@ -1,6 +1,6 @@
 ---
 title: "A2_Group5"
-author: "Mirre Dona (6156630), Merel Das (6600034), Lukas Stemerdink (6217265)"
+author: "Merel Das (6600034), Mirre Dona (6156630), Lukas Stemerdink (6217265)"
 date: "2023-11-12"
 output: html_document
 ---
@@ -37,19 +37,19 @@ View(sleepdata)
 The Sleep Health and Lifestyle Dataset, here called sleepdata, consists of 400 rows and 13 columns. The dataset consists of sleep-related data. A lot of variables are presented, including gender, age, occupation, sleep duration, quality of sleep, physical activity levels, stress levels, BMI category, blood pressure, heart rate, daily steps, and, if it is the case, the sleep disorders. This dataset offers the opportunity to gain insights into whether sleep factors and lifestyle factors are related.
 
 The following variables are included in the dataset:
-- **Person ID**: An identifier for each individual in the dataset.
-- **Gender**: [Male/Female] (stored as factor).
+- **Person ID**: An identifier for each individual in the dataset (stored as integer).
+- **Gender**: [Male/Female] (stored as object).
 - **Age**: The age of the person in years (stored as integer).
-- **Occupation**: The occupation or profession of the person (stored as factor).
-- **Sleep Duration**: The number of hours the person sleeps per day (stored as numeric value).
+- **Occupation**: The occupation or profession of the person (stored as object).
+- **Sleep Duration**: The number of hours the person sleeps per day (stored as float).
 - **Quality of Sleep**: [1-10] A subjective rating of the quality of sleep, ranging from 1 to 10 (stored as integer).
 - **Physical Activity Level**: The number of minutes the person engages in physical activity daily (stored as integer of minutes/day).
 - **Stress Level** [1-10]: A subjective rating of the stress level experienced by the person, ranging from 1 to 10 (stored as integer).
-- **BMI Category**: The BMI category of the person (e.g., Underweight, Normal, Overweight, stored as factor).
-- **Blood Pressure** (systolic/diastolic): The blood pressure measurement of the person, indicated as systolic pressure over diastolic pressure (stored as character).
+- **BMI Category**: The BMI category of the person (e.g., Underweight, Normal, Overweight, stored as object).
+- **Blood Pressure** (systolic/diastolic): The blood pressure measurement of the person, indicated as systolic pressure over diastolic pressure (stored as object).
 - **Heart Rate** (bpm): The resting heart rate of the person in beats per minute (stored as integer).
 - **Daily Steps**: The number of steps the person takes per day (stored as integer).
-- **Sleep Disorder**: The presence or absence of a sleep disorder in the person (None, Insomnia, Sleep Apnea, stored as character).
+- **Sleep Disorder**: The presence or absence of a sleep disorder in the person (None, Insomnia, Sleep Apnea, stored as object).
 
 To download the dataset, click [here](https://www.kaggle.com/code/jillanisofttech/sleep-health-and-lifestyle-predication-with-94-ac).
 
@@ -57,6 +57,7 @@ With this dataset, we aim to predict a person's sleep quality. We chose this res
 
 # Data cleaning
 Before we begin, the data should be cleaned for proper use.
+
 ## Missing data
 ```{r}
 md.pattern(sleepdata, rotate.names = TRUE)
@@ -70,8 +71,8 @@ Let's convert the variables to the right type for exploration and prediction lat
 unique(sleepdata$Occupation)
 #The amount of values for the other chr variables were inspected in the R environment
 
-# All variables are changed to factor, as downloading a .csv changes all properties
 # Blood.Pressure is split, converted, and compared
+# All variables are changed to factor, as downloading a .csv changes all properties
 sleepdata %<>% 
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
@@ -88,7 +89,7 @@ sleepdata %<>%
 ## Select variables
 For our analysis and prediction we do not need the person identifier of each case, so we remove this variable.
 ```{r}
-sleepdata %<>% select(-Person.ID) # Remove Person.ID from sleepdata.
+sleepdata %<>% select(-Person.ID) # Remove Person.ID from sleepdata
 ```
 
 ## Outlier removal
@@ -108,14 +109,14 @@ out_ind <- which(sleepdata$Heart.Rate %in% c(out)) # Find the indices of the out
 sleepdata[out_ind, ] %>% 
   select(Heart.Rate, BMI.Category, Sleep.Disorder) # Show the outliers in the dataset
 ```
-As can be seen, only the Heart.Rate variable contains outliers; people with a much higher than average heart rate during sleep. When we look at the entries, we see that all these people have a sleep disorder, and that almost all of them are overweight or obese. Because of this, we conclude that these are "expected" outliers, and keep them in the dataset. 
+As can be seen, only the Heart.Rate variable contains outliers; people with a much higher than average heart rate during sleep. When we look at the entries, we see that all these people have a sleep disorder, and that almost all of them are overweight or obese. Because of this, we assume that these are "expected" outliers, and keep them in the dataset. 
 
 # Exploratory data analysis
 
 To explore the data, we take a look at different factors we have deemed as important: Quality of sleep, sleep duration, and BMI category
 
 ```{r}
-# Create a boxplot of the sleep quality per sleep duration.
+# Create a boxplot of the sleep quality per sleep duration
 plot_sleepdata2 <- sleepdata %>% mutate(
   Quality.of.Sleep = as.factor(Quality.of.Sleep)
 ) %>% 
@@ -133,6 +134,7 @@ ggplot(sleepdata, aes(x = Gender, y = Quality.of.Sleep)) +
   theme_minimal() +
   labs(title = "Sleep Quality by Gender", y = "Quality of Sleep")
 ```
+
 Moreover, women seem to have a higher quality of sleep on average compared to men. 
 
 ```{r}
@@ -145,6 +147,7 @@ sleepdata %>%
     mad = mad(Sleep.Duration) # Adding median absolute deviation 
   )
 ```
+
 Then, looking at the median, min, max, and median absolute deviation sleep duration per occupation, it can be seen that Sales Representatives sleep the least on average, followed by Scientist. Though the variation is not very strong per occupation, there is some variance. 
 
 ```{r}
@@ -155,6 +158,7 @@ sleepdata %>%
   theme_minimal() + 
   labs(title = "Sleep Quality per BMI category", x = "BMI category", y = "Quality of Sleep")
 ```
+
 Lastly, looking at how the BMI category impacts the quality of sleep, people with lower weight seem to sleep better than heavier people. 
 
 # Prediction model
@@ -177,22 +181,24 @@ First we split the data in training, validation, and test data
 set.seed(123)
 
 # Create a training set and a test set
-
-train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set.
+train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set
 train_data <- sleepdata[train,]
-test_data <- sleepdata[-train,] # Use the other 25% of the rows for the test set.
+test_data <- sleepdata[-train,] # Use the other 25% of the rows for the test set
 
 ```
 
 ### Train model
 
-# Classification tree
 ```{r}
 tree_mod <- rpart(Quality.of.Sleep ~ ., data = sleepdata)
 rpart.plot(tree_mod) #plot tree
 ```
 
-# Random forest
+### Performance evaluation
+
+# Complex model selection
+To improve upon our simple model, we tried random forest and boosting. As ...
+## Random forest
 ```{r}
 rf_mod <- randomForest(Quality.of.Sleep ~ ., data = sleepdata)
 rf_mod
@@ -206,7 +212,7 @@ tibble(
   geom_bar(stat = "identity")
 ```
 
-# Boosting
+## Boosting
 ```{r}
 gbm_train <- train(Quality.of.Sleep ~ .,
                    data = sleepdata,
@@ -222,8 +228,6 @@ predictions <- predict(gbm_train)
 ### Performance evaluation
 
 ### Interpretation of model
-
-## Complex model selection
 
 
 
