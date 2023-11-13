@@ -141,13 +141,13 @@ plot_sleepdata2
 
 As can be seen in the box plot above, generally, the sleep quality increases as sleep duration increases. 
 ```{r}
-ggplot(sleepdata, aes(x = Gender, y = Quality.of.Sleep)) +
+ggplot(sleepdata, aes(x = Gender, y = as.numeric(Quality.of.Sleep))) +
   geom_boxplot(fill = "lightblue") +
   theme_minimal() +
   labs(title = "Sleep Quality by Gender", y = "Quality of Sleep")
 ```
 
-Moreover, women seem to have a higher quality of sleep on average compared to men. 
+Moreover, women seem to have a higher quality of sleep on average compared to men. To compare the quality of sleep to itself in a boxplot, it has to be converted back to a numeric value. 
 
 ```{r}
 sleepdata %>% 
@@ -155,8 +155,7 @@ sleepdata %>%
   summarise( 
     median = median(Sleep.Duration),
     min = min(Sleep.Duration),
-    max = max(Sleep.Duration),
-    mad = mad(Sleep.Duration) # Adding median absolute deviation 
+    max = max(Sleep.Duration)
   )
 ```
 
@@ -164,14 +163,14 @@ Then, looking at the median, min, max, and median absolute deviation sleep durat
 
 ```{r}
 sleepdata %>% 
-  ggplot(aes(x = BMI.Category, y = Quality.of.Sleep)) + 
+  ggplot(aes(x = BMI.Category, y = as.numeric(Quality.of.Sleep))) + 
   scale_x_discrete(limits = c("Normal", "Normal Weight", "Overweight", "Obese")) +
   geom_boxplot(fill = "lightblue") + 
   theme_minimal() + 
   labs(title = "Sleep Quality per BMI category", x = "BMI category", y = "Quality of Sleep")
 ```
 
-Lastly, looking at how the BMI category impacts the quality of sleep, people with lower weight seem to sleep better than heavier people. 
+Lastly, looking at how the BMI category impacts the quality of sleep, people with lower weight seem to sleep better than heavier people. Again, to compare quality of sleep to itself in a boxplot, it has to be converted back to a numeric value.
 
 # Prediction model
 As described above, the response variable we chose to predict is quality of sleep. This is a (transformed) categorical variable with possible values 1 through 10.
