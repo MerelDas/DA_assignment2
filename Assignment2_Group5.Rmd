@@ -13,17 +13,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(ISLR) 
 library(tidyverse) 
-library(readr) # for data import
+library(readr) # For data import
 library(dplyr)
-library(magrittr) # for pipes
-library(mice) # for missing data
-library(ggplot2) # for plotting
+library(magrittr) # For pipes
+library(mice) # For missing data
+library(ggplot2) # For plotting
 library(psych)
 library(reshape2)
 
-library(randomForest)
-library(rpart)
-library(rpart.plot)
+library(randomForest) # For random forest
+library(rpart) # For decision tree
+library(rpart.plot) # For plotting decision tree
 
 ```
 
@@ -35,6 +35,21 @@ View(sleepdata)
 
 # Description of the data
 The Sleep Health and Lifestyle Dataset, here called sleepdata, consists of 400 rows and 13 columns. The dataset consists of sleep-related data. A lot of variables are presented, including gender, age, occupation, sleep duration, quality of sleep, physical activity levels, stress levels, BMI category, blood pressure, heart rate, daily steps, and, if it is the case, the sleep disorders. This dataset offers the opportunity to gain insights into whether sleep factors and lifestyle factors are related.
+
+The following variables are included in the dataset:
+- **Person ID**: An identifier for each individual in the dataset.
+- **Gender**: [Male/Female] (stored as factor).
+- **Age**: The age of the person in years (stored as integer).
+- **Occupation**: The occupation or profession of the person (stored as factor).
+- **Sleep Duration**: The number of hours the person sleeps per day (stored as numeric value).
+- **Quality of Sleep**: [1-10] A subjective rating of the quality of sleep, ranging from 1 to 10 (stored as integer).
+- **Physical Activity Level**: The number of minutes the person engages in physical activity daily (stored as integer of minutes/day).
+- **Stress Level** [1-10]: A subjective rating of the stress level experienced by the person, ranging from 1 to 10 (stored as integer).
+- **BMI Category**: The BMI category of the person (e.g., Underweight, Normal, Overweight, stored as factor).
+- **Blood Pressure** (systolic/diastolic): The blood pressure measurement of the person, indicated as systolic pressure over diastolic pressure (stored as character).
+- **Heart Rate** (bpm): The resting heart rate of the person in beats per minute (stored as integer).
+- **Daily Steps**: The number of steps the person takes per day (stored as integer).
+- **Sleep Disorder**: The presence or absence of a sleep disorder in the person (None, Insomnia, Sleep Apnea, stored as character).
 
 To download the dataset, click [here](https://www.kaggle.com/code/jillanisofttech/sleep-health-and-lifestyle-predication-with-94-ac).
 
@@ -51,7 +66,7 @@ There is no missing data in this dataset!
 ## Transform variable types
 Let's convert the variables to the right type for exploration and prediction later on. We chose to transform the sleep quality (a scale from 10 - 10) to a factor, as we have found in literature that for ratings with a narrow range, classification techniques often work better than regression. [1](https://aclanthology.org/W10-1205.pdf)[2](https://towardsdatascience.com/1-to-5-star-ratings-classification-or-regression-b0462708a4df)
 ```{r}
-#check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
+# Check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
 unique(sleepdata$Occupation)
 #The amount of values for the other chr variables were inspected in the R environment
 
@@ -61,6 +76,7 @@ sleepdata %<>%
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
          BMI.Category = as.factor(BMI.Category),
+         Sleep.Disorder = as.factor(Sleep.Disorder),
          Sleep.Disorder = as.factor(Sleep.Disorder)) %>% 
   separate_wider_delim(cols = Blood.Pressure, delim = "/", names = c("Systolic", "Diastolic")) %>% 
   mutate(Blood.Reading = ifelse(
@@ -73,23 +89,24 @@ sleepdata %<>%
 ## Select variables
 For our analysis and prediction we do not need the person identifier of each case, so we remove this variable.
 ```{r}
-sleepdata %<>% select(-Person.ID)
+sleepdata %<>% select(-Person.ID) # Remove Person.ID from sleepdata.
 ```
 
 ## Outlier removal
 We checked for potential outliers based on the IQR criterion. For this, we used boxplot stats per numerical value, and looked how many outliers it produced. 
 
 ```{r}
-boxplot.stats(sleepdata$Sleep.Duration)$out
+# Check the outliers per variable:
+boxplot.stats(sleepdata$Sleep.Duration)$out 
 boxplot.stats(sleepdata$Quality.of.Sleep)$out
 boxplot.stats(sleepdata$Physical.Activity.Level)$out
 boxplot.stats(sleepdata$Stress.Level)$out
 boxplot.stats(sleepdata$Heart.Rate)$out
 boxplot.stats(sleepdata$Daily.Steps)$out
 
-out <- boxplot.stats(sleepdata$Heart.Rate)$out
-out_ind <- which(sleepdata$Heart.Rate %in% c(out))
-sleepdata[out_ind, ]
+out <- boxplot.stats(sleepdata$Heart.Rate)$out # Save the outliers of Heart.Rate in variable out
+out_ind <- which(sleepdata$Heart.Rate %in% c(out)) # Find the indices of the outliers in the dataset
+sleepdata[out_ind, ] # Show the outliers in the dataset
 ```
 As can be seen, only the Heart.Rate variable contains outliers; people with a much higher than average heart rate during sleep. When we look at the entries, we see that all these people have a sleep disorder, and that almost all of them are overweight or obese. Because of this, we conclude that these are "expected" outliers, and keep them in the dataset. 
 
@@ -98,7 +115,7 @@ As can be seen, only the Heart.Rate variable contains outliers; people with a mu
 To explore the data, we take a look at different factors we have deemed as important: Quality of sleep, sleep duration, and BMI category
 
 ```{r}
-# create a boxplot of the sleep quality per sleep duration.
+# Create a boxplot of the sleep quality per sleep duration.
 plot_sleepdata2 <- sleepdata %>% mutate(
   Quality.of.Sleep = as.factor(Quality.of.Sleep)
 ) %>% 
@@ -120,7 +137,7 @@ Moreover, women seem to have a higher quality of sleep on average compared to me
 
 ```{r}
 sleepdata %>% 
-  group_by(Occupation) %>% 
+  group_by(Occupation) %>%
   summarise( 
     median = median(Sleep.Duration),
     min = min(Sleep.Duration),
@@ -159,8 +176,12 @@ cordata <- sleepdata %>%
 #create correlation matrix
 corr_mat <- round(cor(cordata),2)
 
-# reduce the size of correlation matrix
+# Reduce the size of correlation matrix
 melted_corr_mat <- melt(corr_mat)
+
+# Plot the correlation heat map
+ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
+```
 
 # plotting the correlation heatmap
 ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()+ theme(axis.text.x=element_text(angle=-15, hjust=-0.01))  + geom_text(aes(Var2, Var1, label = value), color = "white", size = 2)
@@ -174,13 +195,62 @@ We decided not to go with support vector machines as it is most effective when t
 
 This is also the reason why we do not think KNN will be a good method, as this method works best for well-defined clusters.
 
-LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. 
+LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. As can be seen below, this is not the case for our data, so we do not use this method.
 
-We chose to try random forest as this technique is robust, handles non-linear relationships well, and can capture complex interactions in the data. It is also good at finding the most informative predicors in the set without having to specify them. 
-
+We chose to use decision trees as classification models as they are robust, handle non-linear relationships well, and can capture complex interactions in the data. They is also good at finding the most informative predictors in the set without having to specify them. As a first model, we simply train one decision tree. 
 
 ### Train, dev, test
 First we split the data in training, validation, and test data
+```{r}
+set.seed(123)
+
+# Create a training set and a test set
+
+train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set.
+train_data <- sleepdata[train,]
+test_data <- sleepdata[-train,] # Use the other 25% of the rows for the test set.
+
+```
+
+```{r}
+# Train a simple linear regression model on the training set of Quality of sleep
+simple_model <- lm(Quality.of.Sleep ~ ., data = train_data)
+
+# Make predictions on the test set
+simple_predictions <- test_train %>% 
+  mutate(Blood.Pressure = )
+  predict(simple_model, newdata = test_data)
+```
+
+# R function to generate all formulas up to size n
+# Erik-Jan van Kesteren
+# October 2018
+
+# Input : 
+#  p      : number of variables 
+#  x_vars : character vector of x vars
+#  y_var  : character of y var
+
+# Output: character vector of formulas
+```{r}
+generate_formulas <- function(p, x_vars, y_var) {
+  # Input checking
+  if (p %% 1 != 0)           stop("Input an integer n")
+  if (p > length(x_vars))    stop("p should be smaller than number of vars")
+  if (!is.character(x_vars)) stop("x_vars should be a character vector")
+  if (!is.character(y_var))  stop("y_vars should be character type")
+  
+  # combn generates all combinations, apply turns them into formula strings
+  apply(combn(x_vars, p), 2, function(vars) {
+    paste0(y_var, " ~ ", paste(vars, collapse = " + "))
+  })
+}
+```
+
+### PCA (of wa anders)
+
+## Simple model selection
+### Train, dev, test
 ```{r}
 #train, test, etc.
 set.seed(123)
@@ -188,6 +258,16 @@ train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for t
 train_data <- sleepdata[train,]
 test_data <- sleepdata[-train,] #use the other 25% of the rows for the test set.
 
+#EDA
+summary(train_data)
+
+# Train a simple linear regression model
+simple_model <- lm(Quality.of.Sleep ~ ., data = train_data)
+
+# Make predictions on the test set
+simple_predictions <- test_train %>% 
+  mutate(Blood.Pressure = )
+  predict(simple_model, newdata = test_data)
 ```
 
 ### Train model
