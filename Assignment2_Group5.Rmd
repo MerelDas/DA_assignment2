@@ -182,25 +182,7 @@ We decided not to go with support vector machines as it is most effective when t
 
 This is also the reason why we do not think KNN will be a good method, as this method works best for well-defined clusters.
 
-LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. As can be seen below, the covariance matrices are not equal in the case of our data, and categorical variables are not continuous and therefore cannot be normally distributed, so we do not use this method.
-
-```{r, warning=FALSE}
-plot <- list()
-box_variables <- c("Age", "Sleep.Duration", "Physical.Activity.Level", "Stress.Level", "Heart.Rate", "Daily.Steps")
-for(i in box_variables) {
-    plot[[i]] <- ggplot(sleepdata, 
-                        aes_string(x = "Quality.of.Sleep", 
-                                   y = i, 
-                                   col = "Quality.of.Sleep", 
-                                   fill = "Quality.of.Sleep")) + 
-    geom_boxplot(fill = "lightblue") + 
-    theme(legend.position = "none") + 
-    scale_color_manual(values = c("blue", "red")) +
-    scale_fill_manual(values = c("blue", "red")) +
-      theme_minimal()
-}
-do.call(grid.arrange, c(plot, nrow = 1))
-```
+LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. As categorical variables are not continuous and therefore cannot be normally distributed, so we do not use this method.
 
 We chose to use decision trees as classification models as they are robust, handle non-linear relationships well, and can capture complex interactions in the data. They is also good at finding the most informative predictors in the set without having to specify them. As a first model, we simply train one decision tree. 
 
@@ -228,8 +210,16 @@ tree_mod <- rpart(Quality.of.Sleep ~ ., data = train_data, method = "class") #me
 
 # Plot tree
 rpart.plot(tree_mod, yesno=2) # Yes/no at each split.
+
 ```
-As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is in almost all cases good predicted. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7.)
+As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is predicted correctly in all cases. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7.)
+
+```{r}
+tree_full_mod <- rpart(Quality.of.Sleep ~., sleepdatatree, control = rpart.control(minbucket = 1, cp = 0))
+rpart.plot(tree_full_mod)
+```
+
+By letting the splits continue untill all cases are classified, we generate the above tree. However, this model probably has too much variance to perform well on new samples (imposing a bias/variance tradeoff). 
 
 ### Performance evaluation
 Now, we can use the model to predict the sleep quality of the test data.
@@ -360,6 +350,6 @@ confusionMatrix(preds, labels)
 
 
 ## Acknowledgement 
-Sadly, after all our analyses, we found out that the data is synthetic and created by the author for illustrative purposes. However, data is synthetisch :((((
+Sadly, after all our analyses, we found out that the data is synthetic and created by the author for illustrative purposes. However, the performed analyses should still hold as if the data was genuine. Any patterns that we found however, are most likely not present in actual sleep/health data. 
 
 
