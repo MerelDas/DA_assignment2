@@ -223,11 +223,10 @@ test_data <- sleepdatatree[-train,] # Use the other 25% of the rows for the test
 tree_mod <- rpart(Quality.of.Sleep ~ ., data = train_data, method = "class") #method = "class" because we are predicting a categorical variable
 
 # Plot tree
-# yesno = 2: adds yes/no at each level.
-# type = 0 : shows the node numbers only.
-# extra = 0: no additional information.
-rpart.plot(tree_mod, yesno=2) 
+rpart.plot(tree_mod, yesno=2) # Yes/no at each split.
 ```
+As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is in almost all cases good predicted. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7.)
+
 ### Performance evaluation
 ```{r}
 # Class prediction
@@ -241,20 +240,23 @@ class_predicted
 confusionMatrix(class_predicted, reference = test_data$Quality.of.Sleep)
 
 ```
+The accuracy of the model is 0.8723. The model is good at predicting a sleep quality of 9, but not at all at predicting a sleep quality of 4 or 5.
+
 ```{r}
 # Model accuracy
-accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted)
+accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted) # Outcome: 0.8723404
 
 # Model training based on gini-splitting
 tree_mod_gini <- rpart(Quality.of.Sleep ~ .,
                        data = train_data, 
                        method = "class", 
-                       parms = list(split = "gini"))
+                       parms = list(split = "gini")) # split = gini means that the split is based on the impurity of the nodes.
 
+# Model training based on information splitting.
 tree_mod_info <- rpart(Quality.of.Sleep ~ .,
                        data = train_data, 
                        method = "class", 
-                       parms = list(split = "information"))
+                       parms = list(split = "information")) # split = information means that the split is based on the information gain of the nodes.
 
 # Class predictions with gini-based splitting
 pred <- predict(tree_mod_gini,
@@ -266,6 +268,8 @@ pred2 <- predict(tree_mod_info,
                  newdata = test_data, 
                  type = "class")
 ```
+
+
 
 ```{r}
 # Compare classification accuracy on test data
