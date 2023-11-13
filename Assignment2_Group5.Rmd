@@ -24,9 +24,13 @@ library(reshape2)
 library(randomForest) # For random forest
 library(rpart) # For decision tree
 library(rpart.plot) # For plotting decision tree
-library(caret) #rf and boostin
+library(caret) # rf and boosting
 
 library(gridExtra) # For assumption checking of LDA
+library(caret) # For confusion matrix
+
+# install.packages("Metrics")
+library(Metrics) # For accuracy metric
 
 ```
 
@@ -229,6 +233,11 @@ rpart.plot(tree_mod, yesno=2)
 class_predicted <- predict(tree_mod,
                            newdata = test_data,
                            type = "class")
+```
+```{r}
+# Generate confusion matric for the test data
+confusionMatrix(class_predicted, test_data$Quality.of.Sleep)
+
 ```
 
 
