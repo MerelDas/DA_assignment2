@@ -216,7 +216,7 @@ test_data <- sleepdatatree[-train,] # Use the other 25% of the rows for the test
 
 ```
 
-### Train model
+### Train tree model
 
 ```{r}
 # Train the decision tree model using the training data.
@@ -245,8 +245,56 @@ confusionMatrix(class_predicted, reference = test_data$Quality.of.Sleep)
 # Model accuracy
 accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted)
 
+# Model training based on gini-splitting
+tree_mod_gini <- rpart(Quality.of.Sleep ~ .,
+                       data = train_data, 
+                       method = "class", 
+                       parms = list(split = "gini"))
+
+tree_mod_info <- rpart(Quality.of.Sleep ~ .,
+                       data = train_data, 
+                       method = "class", 
+                       parms = list(split = "information"))
+
+# Class predictions with gini-based splitting
+pred <- predict(tree_mod_gini,
+                newdata = test_data, 
+                type = "class")
+
+# Class prediction with information-based splitting
+pred2 <- predict(tree_mod_info,
+                 newdata = test_data, 
+                 type = "class")
 ```
 
+```{r}
+# Compare classification accuracy on test data
+accuracy(actual = test_data$Quality.of.Sleep, predicted = pred) # Outcome is 0.8723404
+
+accuracy(actual = test_data$Quality.of.Sleep, predicted = pred2) # Outcome is 0.9148936
+
+rpart.plot(x = tree_mod_gini, yesno = 2, extra = 0, type = 0)
+```
+### Tree pruning 
+```{r}
+plotcp(tree_mod_gini)
+print(tree_mod_gini$cptable)
+
+index <- which.min(tree_mod_gini$cptable[,"xerror"]) # Outcome: 4 4
+cp_optimal <- tree_mod_gini$cptable[index, "CP"] # Outcome: 0.02051282
+
+tree_mod_pruned <- prune(tree_mod_gini, cp = cp_optimal)
+
+# Plot optimized model
+rpart.plot(tree_mod_pruned, yesno = 2, extra = 0, type = 0)
+```
+```{r}
+pred3 <- predict(tree_mod_pruned,
+                 newdata = test_data, 
+                 type = "class")
+
+accuracy(actual = test_data$Quality.of.Sleep, predicted = pred3) # Outcome is 0.8510638
+```
 
 # Complex model selection
 To improve upon our simple model, we tried random forest and boosting. As ...
