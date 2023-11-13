@@ -25,31 +25,33 @@ library(randomForest) # For random forest
 library(rpart) # For decision tree
 library(rpart.plot) # For plotting decision tree
 
+library(gridExtra) # For assumption checking of LDA
+
 ```
 
 # Import dataset
 ```{r}
 sleepdata <- read.csv('data/Sleep_health_and_lifestyle_dataset.csv')
-View(sleepdata)
+head(sleepdata)
 ```
 
 # Description of the data
 The Sleep Health and Lifestyle Dataset, here called sleepdata, consists of 400 rows and 13 columns. The dataset consists of sleep-related data. A lot of variables are presented, including gender, age, occupation, sleep duration, quality of sleep, physical activity levels, stress levels, BMI category, blood pressure, heart rate, daily steps, and, if it is the case, the sleep disorders. This dataset offers the opportunity to gain insights into whether sleep factors and lifestyle factors are related.
 
 The following variables are included in the dataset:
-- **Person ID**: An identifier for each individual in the dataset (stored as integer).
-- **Gender**: [Male/Female] (stored as object).
-- **Age**: The age of the person in years (stored as integer).
-- **Occupation**: The occupation or profession of the person (stored as object).
-- **Sleep Duration**: The number of hours the person sleeps per day (stored as float).
-- **Quality of Sleep**: [1-10] A subjective rating of the quality of sleep, ranging from 1 to 10 (stored as integer).
-- **Physical Activity Level**: The number of minutes the person engages in physical activity daily (stored as integer of minutes/day).
-- **Stress Level** [1-10]: A subjective rating of the stress level experienced by the person, ranging from 1 to 10 (stored as integer).
-- **BMI Category**: The BMI category of the person (e.g., Underweight, Normal, Overweight, stored as object).
-- **Blood Pressure** (systolic/diastolic): The blood pressure measurement of the person, indicated as systolic pressure over diastolic pressure (stored as object).
-- **Heart Rate** (bpm): The resting heart rate of the person in beats per minute (stored as integer).
-- **Daily Steps**: The number of steps the person takes per day (stored as integer).
-- **Sleep Disorder**: The presence or absence of a sleep disorder in the person (None, Insomnia, Sleep Apnea, stored as object).
+* **Person ID**: An identifier for each individual in the dataset (stored as integer).
+* **Gender**: [Male/Female] (stored as object).
+* **Age**: The age of the person in years (stored as integer).
+* **Occupation**: The occupation or profession of the person (stored as object).
+* **Sleep Duration**: The number of hours the person sleeps per day (stored as float).
+* **Quality of Sleep**: [1-10] A subjective rating of the quality of sleep, ranging from 1 to 10 (stored as integer).
+* **Physical Activity Level**: The number of minutes the person engages in physical activity daily (stored as integer of minutes/day).
+* **Stress Level** [1-10]: A subjective rating of the stress level experienced by the person, ranging from 1 to 10 (stored as integer).
+* **BMI Category**: The BMI category of the person (e.g., Underweight, Normal, Overweight, stored as object).
+* **Blood Pressure** (systolic/diastolic): The blood pressure measurement of the person, indicated as systolic pressure over diastolic pressure (stored as object).
+* **Heart Rate** (bpm): The resting heart rate of the person in beats per minute (stored as integer).
+* **Daily Steps**: The number of steps the person takes per day (stored as integer).
+* **Sleep Disorder**: The presence or absence of a sleep disorder in the person (None, Insomnia, Sleep Apnea, stored as object).
 
 To download the dataset, click [here](https://www.kaggle.com/code/jillanisofttech/sleep-health-and-lifestyle-predication-with-94-ac).
 
@@ -60,20 +62,19 @@ Before we begin, the data should be cleaned for proper use.
 
 ## Missing data
 ```{r}
-md.pattern(sleepdata) #Kijken of deze verticaal kan, of labels scheef
+md.pattern(sleepdata, rotate.names = TRUE)
 ```
 There is no missing data in this dataset!
 
 ## Transform variable types
-Let's convert the variables to the right type for exploration and prediction later on. We chose to transform the sleep quality (a scale from 10 - 10) to a factor, as we have found in literature that for ratings with a narrow range, classification techniques often work better than regression. [1](https://aclanthology.org/W10-1205.pdf)[2](https://towardsdatascience.com/1-to-5-star-ratings-classification-or-regression-b0462708a4df)
+Let's convert the variables to the right type for exploration and prediction later on. We chose to transform the sleep quality (a scale from 10 - 10) to a factor, as we have found in literature that for ratings with a narrow range, classification techniques often work better than regression. [1](https://aclanthology.org/W10-1205.pdf)[2](https://towardsdatascience.com/1-to-5-star-ratings-classification-or-regression-b0462708a4df). Blood.Pressure is split into Systolic (pressure) and Diastolic (pressure), both are then compared to ideal/high/low pressure and labeled as such [3](https://www.nhs.uk/common-health-questions/lifestyle/what-is-blood-pressure/). 
 ```{r}
 # Check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
 unique(sleepdata$Occupation)
-# The amount of values for the other chr variables were inspected in the R environment
-```
+#The amount of values for the other chr variables were inspected in the R environment
 
-```{r}
-# Convert variables Gender, Occupation, BMI.Category, and Sleep.Disorder to a factor
+# Blood.Pressure is split, converted, and compared
+# All variables are changed to factor, as downloading a .csv changes all properties
 sleepdata %<>% 
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
@@ -86,7 +87,6 @@ sleepdata %<>%
       test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
     )))
 ```
-!!nog iets doen met blood pressure
 
 ## Select variables
 For our analysis and prediction we do not need the person identifier of each case, so we remove this variable.
@@ -108,7 +108,8 @@ boxplot.stats(sleepdata$Daily.Steps)$out
 
 out <- boxplot.stats(sleepdata$Heart.Rate)$out # Save the outliers of Heart.Rate in variable out
 out_ind <- which(sleepdata$Heart.Rate %in% c(out)) # Find the indices of the outliers in the dataset
-sleepdata[out_ind, ] # Show the outliers in the dataset
+sleepdata[out_ind, ] %>% 
+  select(Heart.Rate, BMI.Category, Sleep.Disorder) # Show the outliers in the dataset
 ```
 As can be seen, only the Heart.Rate variable contains outliers; people with a much higher than average heart rate during sleep. When we look at the entries, we see that all these people have a sleep disorder, and that almost all of them are overweight or obese. Because of this, we assume that these are "expected" outliers, and keep them in the dataset. 
 
@@ -172,7 +173,25 @@ We decided not to go with support vector machines as it is most effective when t
 
 This is also the reason why we do not think KNN will be a good method, as this method works best for well-defined clusters.
 
-LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. As can be seen below, this is not the case for our data, so we do not use this method.
+LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. As can be seen below, the covariance matrices are not equal in the case of our data, and categorical variables are not continuous and therefore cannot be normally distributed, so we do not use this method.
+
+```{r, warning=FALSE}
+plot <- list()
+box_variables <- c("Age", "Sleep.Duration", "Physical.Activity.Level", "Stress.Level", "Heart.Rate", "Daily.Steps")
+for(i in box_variables) {
+    plot[[i]] <- ggplot(sleepdata, 
+                        aes_string(x = "Quality.of.Sleep", 
+                                   y = i, 
+                                   col = "Quality.of.Sleep", 
+                                   fill = "Quality.of.Sleep")) + 
+    geom_boxplot(fill = "lightblue") + 
+    theme(legend.position = "none") + 
+    scale_color_manual(values = c("blue", "red")) +
+    scale_fill_manual(values = c("blue", "red")) +
+      theme_minimal()
+}
+do.call(grid.arrange, c(plot, nrow = 1))
+```
 
 We chose to use decision trees as classification models as they are robust, handle non-linear relationships well, and can capture complex interactions in the data. They is also good at finding the most informative predictors in the set without having to specify them. As a first model, we simply train one decision tree. 
 
