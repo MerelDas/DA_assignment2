@@ -25,12 +25,14 @@ library(randomForest) # For random forest
 library(rpart) # For decision tree
 library(rpart.plot) # For plotting decision tree
 
+library(gridExtra) # For assumption checking of LDA
+
 ```
 
 # Import dataset
 ```{r}
 sleepdata <- read.csv('data/Sleep_health_and_lifestyle_dataset.csv')
-View(sleepdata)
+head(sleepdata)
 ```
 
 # Description of the data
@@ -171,7 +173,25 @@ We decided not to go with support vector machines as it is most effective when t
 
 This is also the reason why we do not think KNN will be a good method, as this method works best for well-defined clusters.
 
-LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. As can be seen below, this is not the case for our data, so we do not use this method.
+LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. As can be seen below, the covariance matrices are not equal in the case of our data, and categorical variables are not continuous and therefore cannot be normally distributed, so we do not use this method.
+
+```{r, warning=FALSE}
+plot <- list()
+box_variables <- c("Age", "Sleep.Duration", "Physical.Activity.Level", "Stress.Level", "Heart.Rate", "Daily.Steps")
+for(i in box_variables) {
+    plot[[i]] <- ggplot(sleepdata, 
+                        aes_string(x = "Quality.of.Sleep", 
+                                   y = i, 
+                                   col = "Quality.of.Sleep", 
+                                   fill = "Quality.of.Sleep")) + 
+    geom_boxplot(fill = "lightblue") + 
+    theme(legend.position = "none") + 
+    scale_color_manual(values = c("blue", "red")) +
+    scale_fill_manual(values = c("blue", "red")) +
+      theme_minimal()
+}
+do.call(grid.arrange, c(plot, nrow = 1))
+```
 
 We chose to use decision trees as classification models as they are robust, handle non-linear relationships well, and can capture complex interactions in the data. They is also good at finding the most informative predictors in the set without having to specify them. As a first model, we simply train one decision tree. 
 
