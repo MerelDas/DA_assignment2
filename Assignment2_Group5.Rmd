@@ -233,6 +233,7 @@ rpart.plot(tree_mod, yesno=2)
 class_predicted <- predict(tree_mod,
                            newdata = test_data,
                            type = "class")
+class_predicted
 ```
 ```{r}
 # Generate confusion matric for the test data
