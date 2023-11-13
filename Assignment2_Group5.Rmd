@@ -200,10 +200,13 @@ First we split the data in training, validation, and test data
 ```{r}
 set.seed(123)
 
+sleepdatatree <- sleepdata %>% 
+  select(-Diastolic, -Systolic)
+
 # Create a training set and a test set
-train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set
-train_data <- sleepdata[train,]
-test_data <- sleepdata[-train,] # Use the other 25% of the rows for the test set
+train <- sample(1:nrow(sleepdatatree), 0.75*nrow(sleepdatatree)) # 75% of the rows for the training set
+train_data <- sleepdatatree[train,]
+test_data <- sleepdatatree[-train,] # Use the other 25% of the rows for the test set
 
 ```
 
