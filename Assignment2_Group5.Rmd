@@ -84,7 +84,7 @@ sleepdata %<>%
   mutate(Blood.Reading = ifelse(
     test = Systolic >= 130 & Diastolic >= 90, yes = "High", no = ifelse(
       test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
-    )))waaa
+    )))
 ```
 !!nog iets doen met blood pressure
 
@@ -191,11 +191,23 @@ test_data <- sleepdata[-train,] # Use the other 25% of the rows for the test set
 ### Train model
 
 ```{r}
-tree_mod <- rpart(Quality.of.Sleep ~ ., data = sleepdata)
-rpart.plot(tree_mod) #plot tree
+# Train the decision tree model using the training data.
+tree_mod <- rpart(Quality.of.Sleep ~ ., data = train_data, method = "class") #method = "class" because we are predicting a categorical variable
+
+# Plot tree
+# yesno = 2: adds yes/no at each level.
+# type = 0 : shows the node numbers only.
+# extra = 0: no additional information.
+rpart.plot(tree_mod, yesno=2) 
+```
+### Performance evaluation
+```{r}
+# Class prediction
+class_predicted <- predict(tree_mod,
+                           newdata = test_data,
+                           type = "class")
 ```
 
-### Performance evaluation
 
 # Complex model selection
 To improve upon our simple model, we tried random forest and boosting. As ...
