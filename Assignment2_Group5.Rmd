@@ -86,12 +86,16 @@ sleepdata %<>%
          BMI.Category = as.factor(BMI.Category),
          Sleep.Disorder = as.factor(Sleep.Disorder),
          Sleep.Disorder = as.factor(Sleep.Disorder),
-         Quality.of.Sleep = as.factor(Quality.of.Sleep)) %>% 
+         Quality.of.Sleep = as.factor(Quality.of.Sleep)) 
+
+sleepdata %<>% 
   separate_wider_delim(cols = Blood.Pressure, delim = "/", names = c("Systolic", "Diastolic")) %>% 
   mutate(Blood.Reading = ifelse(
     test = Systolic >= 130 & Diastolic >= 90, yes = "High", no = ifelse(
       test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
-    )))
+    ))) %>% 
+  mutate(Systolic = as.numeric(Systolic)) %>% 
+  mutate(Diastolic = as.numeric(Diastolic))
 ```
 
 ## Select variables
@@ -137,13 +141,13 @@ plot_sleepdata2
 
 As can be seen in the box plot above, generally, the sleep quality increases as sleep duration increases. 
 ```{r}
-ggplot(sleepdata, aes(x = Gender, y = Quality.of.Sleep)) +
+ggplot(sleepdata, aes(x = Gender, y = as.numeric(Quality.of.Sleep))) +
   geom_boxplot(fill = "lightblue") +
   theme_minimal() +
   labs(title = "Sleep Quality by Gender", y = "Quality of Sleep")
 ```
 
-Moreover, women seem to have a higher quality of sleep on average compared to men. 
+Moreover, women seem to have a higher quality of sleep on average compared to men. To compare the quality of sleep to itself in a boxplot, it has to be converted back to a numeric value. 
 
 ```{r}
 sleepdata %>% 
@@ -151,8 +155,7 @@ sleepdata %>%
   summarise( 
     median = median(Sleep.Duration),
     min = min(Sleep.Duration),
-    max = max(Sleep.Duration),
-    mad = mad(Sleep.Duration) # Adding median absolute deviation 
+    max = max(Sleep.Duration)
   )
 ```
 
@@ -160,14 +163,14 @@ Then, looking at the median, min, max, and median absolute deviation sleep durat
 
 ```{r}
 sleepdata %>% 
-  ggplot(aes(x = BMI.Category, y = Quality.of.Sleep)) + 
+  ggplot(aes(x = BMI.Category, y = as.numeric(Quality.of.Sleep))) + 
   scale_x_discrete(limits = c("Normal", "Normal Weight", "Overweight", "Obese")) +
   geom_boxplot(fill = "lightblue") + 
   theme_minimal() + 
   labs(title = "Sleep Quality per BMI category", x = "BMI category", y = "Quality of Sleep")
 ```
 
-Lastly, looking at how the BMI category impacts the quality of sleep, people with lower weight seem to sleep better than heavier people. 
+Lastly, looking at how the BMI category impacts the quality of sleep, people with lower weight seem to sleep better than heavier people. Again, to compare quality of sleep to itself in a boxplot, it has to be converted back to a numeric value.
 
 # Prediction model
 As described above, the response variable we chose to predict is quality of sleep. This is a (transformed) categorical variable with possible values 1 through 10.
@@ -179,25 +182,7 @@ We decided not to go with support vector machines as it is most effective when t
 
 This is also the reason why we do not think KNN will be a good method, as this method works best for well-defined clusters.
 
-LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. As can be seen below, the covariance matrices are not equal in the case of our data, and categorical variables are not continuous and therefore cannot be normally distributed, so we do not use this method.
-
-```{r, warning=FALSE}
-plot <- list()
-box_variables <- c("Age", "Sleep.Duration", "Physical.Activity.Level", "Stress.Level", "Heart.Rate", "Daily.Steps")
-for(i in box_variables) {
-    plot[[i]] <- ggplot(sleepdata, 
-                        aes_string(x = "Quality.of.Sleep", 
-                                   y = i, 
-                                   col = "Quality.of.Sleep", 
-                                   fill = "Quality.of.Sleep")) + 
-    geom_boxplot(fill = "lightblue") + 
-    theme(legend.position = "none") + 
-    scale_color_manual(values = c("blue", "red")) +
-    scale_fill_manual(values = c("blue", "red")) +
-      theme_minimal()
-}
-do.call(grid.arrange, c(plot, nrow = 1))
-```
+LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. As categorical variables are not continuous and therefore cannot be normally distributed, so we do not use this method.
 
 We chose to use decision trees as classification models as they are robust, handle non-linear relationships well, and can capture complex interactions in the data. They is also good at finding the most informative predictors in the set without having to specify them. As a first model, we simply train one decision tree. 
 
@@ -216,19 +201,29 @@ test_data <- sleepdatatree[-train,] # Use the other 25% of the rows for the test
 
 ```
 
-### Train model
+### Train tree model
+Then, we train the decision tree model using the training data.
 
 ```{r}
 # Train the decision tree model using the training data.
 tree_mod <- rpart(Quality.of.Sleep ~ ., data = train_data, method = "class") #method = "class" because we are predicting a categorical variable
 
 # Plot tree
-# yesno = 2: adds yes/no at each level.
-# type = 0 : shows the node numbers only.
-# extra = 0: no additional information.
-rpart.plot(tree_mod, yesno=2) 
+rpart.plot(tree_mod, yesno=2) # Yes/no at each split.
+
 ```
+As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is predicted correctly in all cases. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7.)
+
+```{r}
+tree_full_mod <- rpart(Quality.of.Sleep ~., sleepdatatree, control = rpart.control(minbucket = 1, cp = 0))
+rpart.plot(tree_full_mod)
+```
+
+By letting the splits continue untill all cases are classified, we generate the above tree. However, this model probably has too much variance to perform well on new samples (imposing a bias/variance tradeoff). 
+
 ### Performance evaluation
+Now, we can use the model to predict the sleep quality of the test data.
+
 ```{r}
 # Class prediction
 class_predicted <- predict(tree_mod,
@@ -241,12 +236,71 @@ class_predicted
 confusionMatrix(class_predicted, reference = test_data$Quality.of.Sleep)
 
 ```
+The accuracy of the model is 0.8723. The model is good at predicting a sleep quality of 9, but not at all at predicting a sleep quality of 4 or 5.
+
+The next step is to try to improve the model. We will try to improve the model by tuning the parameters. Gini and information are two different ways to measure the impurity of the nodes.
 ```{r}
 # Model accuracy
-accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted)
+accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted) # Outcome: 0.8723404
 
+# Model training based on gini-splitting
+tree_mod_gini <- rpart(Quality.of.Sleep ~ .,
+                       data = train_data, 
+                       method = "class", 
+                       parms = list(split = "gini")) # split = gini means that the split is based on the impurity of the nodes.
+
+# Model training based on information splitting.
+tree_mod_info <- rpart(Quality.of.Sleep ~ .,
+                       data = train_data, 
+                       method = "class", 
+                       parms = list(split = "information")) # split = information means that the split is based on the information gain of the nodes.
+
+# Class predictions with gini-based splitting
+pred <- predict(tree_mod_gini,
+                newdata = test_data, 
+                type = "class")
+
+# Class prediction with information-based splitting
+pred2 <- predict(tree_mod_info,
+                 newdata = test_data, 
+                 type = "class")
 ```
 
+
+The data of the classification accuracy on the test data will be compared for the two models. 
+```{r}
+# Compare classification accuracy on test data
+accuracy(actual = test_data$Quality.of.Sleep, predicted = pred) # Outcome is 0.8723404
+
+accuracy(actual = test_data$Quality.of.Sleep, predicted = pred2) # Outcome is 0.9148936
+
+rpart.plot(x = tree_mod_gini, yesno = 2, extra = 0, type = 0)
+```
+The accuracy of the model based on gini-splitting is 0.8723, and the accuracy of the model based on information-splitting is 0.9149. The model based on information-splitting is better at predicting the sleep quality of the test data.
+
+### Tree pruning 
+The next step is to prune the tree. Pruning is a technique in machine learning that reduces the size of decision trees by removing sections of the tree that provide little power to classify instances. Pruning reduces the complexity of the final classifier, and hence improves predictive accuracy by the reduction of overfitting.
+
+```{r}
+plotcp(tree_mod_gini)
+print(tree_mod_gini$cptable)
+
+index <- which.min(tree_mod_gini$cptable[,"xerror"]) # Outcome: 4 4
+cp_optimal <- tree_mod_gini$cptable[index, "CP"] # Outcome: 0.02051282
+
+tree_mod_pruned <- prune(tree_mod_gini, cp = cp_optimal)
+
+# Plot optimized model
+rpart.plot(tree_mod_pruned, yesno = 2, extra = 0, type = 0)
+```
+```{r}
+pred3 <- predict(tree_mod_pruned,
+                 newdata = test_data, 
+                 type = "class")
+
+accuracy(actual = test_data$Quality.of.Sleep, predicted = pred3) # Outcome is 0.8510638
+```
+The accuracy of the pruned model is 0.8511. This is lower than the accuracy of the model based on information-splitting.
 
 # Complex model selection
 To improve upon our simple model, we tried random forest and boosting. As ...
@@ -304,6 +358,7 @@ confusionMatrix(preds, labels)
 
 
 
-
+## Acknowledgement 
+Sadly, after all our analyses, we found out that the data is synthetic and created by the author for illustrative purposes. However, the performed analyses should still hold as if the data was genuine. Any patterns that we found however, are most likely not present in actual sleep/health data. 
 
 
