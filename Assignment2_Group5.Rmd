@@ -369,9 +369,9 @@ Sleep duration and stress level are again the most important predictors.
 ```{r}
 confusionMatrix(gbm_test, test_data$Quality.of.Sleep)
 ```
-The boosting model is only slightly better than the Random Forest model. The difference is so small that it is probably just due to random chance.
+The boosting model is only slightly better than the Random Forest model. The difference is so small that it is probably just random variation.
 
-#conclusions
+# Conclusions
 
 
 
