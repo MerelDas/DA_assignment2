@@ -86,12 +86,16 @@ sleepdata %<>%
          BMI.Category = as.factor(BMI.Category),
          Sleep.Disorder = as.factor(Sleep.Disorder),
          Sleep.Disorder = as.factor(Sleep.Disorder),
-         Quality.of.Sleep = as.factor(Quality.of.Sleep)) %>% 
+         Quality.of.Sleep = as.factor(Quality.of.Sleep)) 
+
+sleepdata %<>% 
   separate_wider_delim(cols = Blood.Pressure, delim = "/", names = c("Systolic", "Diastolic")) %>% 
   mutate(Blood.Reading = ifelse(
     test = Systolic >= 130 & Diastolic >= 90, yes = "High", no = ifelse(
       test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
-    )))
+    ))) %>% 
+  mutate(Systolic = as.numeric(Systolic)) %>% 
+  mutate(Diastolic = as.numeric(Diastolic))
 ```
 
 ## Select variables
@@ -343,6 +347,7 @@ confusionMatrix(preds, labels)
 
 
 
-
+## Acknowledgement 
+Sadly, after all our analyses, we found out that the data is synthetic and created by the author for illustrative purposes. However, data is synthetisch :((((
 
 
