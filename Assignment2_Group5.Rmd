@@ -64,14 +64,14 @@ md.pattern(sleepdata)
 There is no missing data in this dataset!
 
 ## Transform variable types
-Let's convert the variables to the right type for exploration and prediction later on. We chose to transform the sleep quality (a scale from 10 - 10) to a factor, as we have found in literature that for ratings with a narrow range, classification techniques often work better than regression. [1](https://aclanthology.org/W10-1205.pdf)[2](https://towardsdatascience.com/1-to-5-star-ratings-classification-or-regression-b0462708a4df)
+Let's convert the variables to the right type for exploration and prediction later on. We chose to transform the sleep quality (a scale from 10 - 10) to a factor, as we have found in literature that for ratings with a narrow range, classification techniques often work better than regression. [1](https://aclanthology.org/W10-1205.pdf)[2](https://towardsdatascience.com/1-to-5-star-ratings-classification-or-regression-b0462708a4df). Blood.Pressure is split into Systolic (pressure) and Diastolic (pressure), both are then compared to ideal/high/low pressure and labeled as such [3](https://www.nhs.uk/common-health-questions/lifestyle/what-is-blood-pressure/). 
 ```{r}
 # Check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
 unique(sleepdata$Occupation)
 #The amount of values for the other chr variables were inspected in the R environment
 
 # All variables are changed to factor, as downloading a .csv changes all properties
-# Blood.Pressure is split into Systolic (pressure) and Diastolic (pressure), both are then compared to ideal/high/low pressure [3](https://www.nhs.uk/common-health-questions/lifestyle/what-is-blood-pressure/)
+# Blood.Pressure is split, converted, and compared
 sleepdata %<>% 
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
@@ -84,7 +84,6 @@ sleepdata %<>%
       test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
     )))
 ```
-!!nog iets doen met blood pressure
 
 ## Select variables
 For our analysis and prediction we do not need the person identifier of each case, so we remove this variable.
