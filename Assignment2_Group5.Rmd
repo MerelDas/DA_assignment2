@@ -66,7 +66,7 @@ sleepdata %<>%
   mutate(Blood.Reading = ifelse(
     test = Systolic >= 130 & Diastolic >= 90, yes = "High", no = ifelse(
       test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
-    )))
+    )))waaa
 ```
 !!nog iets doen met blood pressure
 
