@@ -345,6 +345,7 @@ The performance of the random forest model is very good, with an accuracy of 97%
 ROC/AUC?
 
 ## Boosting
+A boosting model is different from Random Forest, it builds a decision tree sequentially, based on the residuals from each previous model. Let's see if a boosting model performs even better.
 ```{r}
 gbm_train <- train(Quality.of.Sleep ~ .,
                    data = sleepdata,
