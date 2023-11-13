@@ -262,16 +262,25 @@ rf_train <- train(Quality.of.Sleep ~ .,
                   importance = TRUE)
 
 rf_test  <- predict(rf_train, newdata = test_data)
-rf_test
 ```
 
 As the structure information of the trees is lost when averaging multiple trees, we can inspect which predictors were most informative by plotting the variable importance. 
 ```{r}
-rf_train %>%
-  varImp %>%
-  plot
-
+data.frame(varImp(rf_train)$importance) %>% 
+  mutate(avg_Importance = rowMeans(.), names=row.names(.)) %>% #mean of varImp for each response level
+  ggplot(aes(x=reorder(names, avg_Importance), y=avg_Importance)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip() + 
+  theme_minimal() + 
+  labs(title="Variable importance plot")
 ```
+The most important predictors for the random forest model are sleep duration and stress level. This is different (or not?) than the predictors used in the single decision tree.
+
+### Evaluation random forest
+```{r}
+confusionMatrix(rf_test, test_data$Quality.of.Sleep)
+```
+The performance of the random forest model is very good, with an accuracy of 97% on the test data.
 
 ## Boosting
 ```{r}
@@ -279,15 +288,15 @@ gbm_train <- train(Quality.of.Sleep ~ .,
                    data = sleepdata,
                    method = "gbm",
                    verbose = F, 
-                   trControl = cvcontrol) #print bag_train, rf_train, gbm_train models to see accuracy
+                   trControl = cvcontrol)
 
 summary(gbm_train) #var importance plot
 
-gbm_test <- predict(gbm_train, newdata = test)
+gbm_test <- predict(gbm_train, newdata = test_data)
 ```
 
 
-### Performance evaluation
+### Evaluation boosting
 accuracy? roc/auc? -> see week 6
 ```{r}
 confusionMatrix(preds, labels)
