@@ -220,6 +220,7 @@ test_data <- sleepdatatree[-train,] # Use the other 25% of the rows for the test
 ```
 
 ### Train tree model
+Then, we train the decision tree model using the training data.
 
 ```{r}
 # Train the decision tree model using the training data.
@@ -231,6 +232,8 @@ rpart.plot(tree_mod, yesno=2) # Yes/no at each split.
 As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is in almost all cases good predicted. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7.)
 
 ### Performance evaluation
+Now, we can use the model to predict the sleep quality of the test data.
+
 ```{r}
 # Class prediction
 class_predicted <- predict(tree_mod,
@@ -245,6 +248,7 @@ confusionMatrix(class_predicted, reference = test_data$Quality.of.Sleep)
 ```
 The accuracy of the model is 0.8723. The model is good at predicting a sleep quality of 9, but not at all at predicting a sleep quality of 4 or 5.
 
+The next step is to try to improve the model. We will try to improve the model by tuning the parameters. Gini and information are two different ways to measure the impurity of the nodes.
 ```{r}
 # Model accuracy
 accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted) # Outcome: 0.8723404
@@ -273,7 +277,7 @@ pred2 <- predict(tree_mod_info,
 ```
 
 
-
+The data of the classification accuracy on the test data will be compared for the two models. 
 ```{r}
 # Compare classification accuracy on test data
 accuracy(actual = test_data$Quality.of.Sleep, predicted = pred) # Outcome is 0.8723404
@@ -282,7 +286,11 @@ accuracy(actual = test_data$Quality.of.Sleep, predicted = pred2) # Outcome is 0.
 
 rpart.plot(x = tree_mod_gini, yesno = 2, extra = 0, type = 0)
 ```
+The accuracy of the model based on gini-splitting is 0.8723, and the accuracy of the model based on information-splitting is 0.9149. The model based on information-splitting is better at predicting the sleep quality of the test data.
+
 ### Tree pruning 
+The next step is to prune the tree. Pruning is a technique in machine learning that reduces the size of decision trees by removing sections of the tree that provide little power to classify instances. Pruning reduces the complexity of the final classifier, and hence improves predictive accuracy by the reduction of overfitting.
+
 ```{r}
 plotcp(tree_mod_gini)
 print(tree_mod_gini$cptable)
@@ -302,6 +310,7 @@ pred3 <- predict(tree_mod_pruned,
 
 accuracy(actual = test_data$Quality.of.Sleep, predicted = pred3) # Outcome is 0.8510638
 ```
+The accuracy of the pruned model is 0.8511. This is lower than the accuracy of the model based on information-splitting.
 
 # Complex model selection
 To improve upon our simple model, we tried random forest and boosting. As ...
