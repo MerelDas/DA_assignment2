@@ -57,9 +57,10 @@ With this dataset, we aim to predict a person's sleep quality. We chose this res
 
 # Data cleaning
 Before we begin, the data should be cleaned for proper use.
+
 ## Missing data
 ```{r}
-md.pattern(sleepdata)
+md.pattern(sleepdata) #Kijken of deze verticaal kan, of labels scheef
 ```
 There is no missing data in this dataset!
 
@@ -72,7 +73,7 @@ unique(sleepdata$Occupation)
 ```
 
 ```{r}
-# Convert variables Gender, Occupation, BMI.Category, and Sleep.Disorder to a factor.
+# Convert variables Gender, Occupation, BMI.Category, and Sleep.Disorder to a factor
 sleepdata %<>% 
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
@@ -90,7 +91,7 @@ sleepdata %<>%
 ## Select variables
 For our analysis and prediction we do not need the person identifier of each case, so we remove this variable.
 ```{r}
-sleepdata %<>% select(-Person.ID) # Remove Person.ID from sleepdata.
+sleepdata %<>% select(-Person.ID) # Remove Person.ID from sleepdata
 ```
 
 ## Outlier removal
@@ -109,14 +110,14 @@ out <- boxplot.stats(sleepdata$Heart.Rate)$out # Save the outliers of Heart.Rate
 out_ind <- which(sleepdata$Heart.Rate %in% c(out)) # Find the indices of the outliers in the dataset
 sleepdata[out_ind, ] # Show the outliers in the dataset
 ```
-As can be seen, only the Heart.Rate variable contains outliers; people with a much higher than average heart rate during sleep. When we look at the entries, we see that all these people have a sleep disorder, and that almost all of them are overweight or obese. Because of this, we conclude that these are "expected" outliers, and keep them in the dataset. 
+As can be seen, only the Heart.Rate variable contains outliers; people with a much higher than average heart rate during sleep. When we look at the entries, we see that all these people have a sleep disorder, and that almost all of them are overweight or obese. Because of this, we assume that these are "expected" outliers, and keep them in the dataset. 
 
 # Exploratory data analysis
 
 To explore the data, we take a look at different factors we have deemed as important: Quality of sleep, sleep duration, and BMI category
 
 ```{r}
-# Create a boxplot of the sleep quality per sleep duration.
+# Create a boxplot of the sleep quality per sleep duration
 plot_sleepdata2 <- sleepdata %>% mutate(
   Quality.of.Sleep = as.factor(Quality.of.Sleep)
 ) %>% 
@@ -134,6 +135,7 @@ ggplot(sleepdata, aes(x = Gender, y = Quality.of.Sleep)) +
   theme_minimal() +
   labs(title = "Sleep Quality by Gender", y = "Quality of Sleep")
 ```
+
 Moreover, women seem to have a higher quality of sleep on average compared to men. 
 
 ```{r}
@@ -146,6 +148,7 @@ sleepdata %>%
     mad = mad(Sleep.Duration) # Adding median absolute deviation 
   )
 ```
+
 Then, looking at the median, min, max, and median absolute deviation sleep duration per occupation, it can be seen that Sales Representatives sleep the least on average, followed by Scientist. Though the variation is not very strong per occupation, there is some variance. 
 
 ```{r}
@@ -156,6 +159,7 @@ sleepdata %>%
   theme_minimal() + 
   labs(title = "Sleep Quality per BMI category", x = "BMI category", y = "Quality of Sleep")
 ```
+
 Lastly, looking at how the BMI category impacts the quality of sleep, people with lower weight seem to sleep better than heavier people. 
 
 # Prediction model
@@ -178,22 +182,24 @@ First we split the data in training, validation, and test data
 set.seed(123)
 
 # Create a training set and a test set
-
-train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set.
+train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set
 train_data <- sleepdata[train,]
-test_data <- sleepdata[-train,] # Use the other 25% of the rows for the test set.
+test_data <- sleepdata[-train,] # Use the other 25% of the rows for the test set
 
 ```
 
 ### Train model
 
-# Classification tree
 ```{r}
 tree_mod <- rpart(Quality.of.Sleep ~ ., data = sleepdata)
 rpart.plot(tree_mod) #plot tree
 ```
 
-# Random forest
+### Performance evaluation
+
+# Complex model selection
+To improve upon our simple model, we tried random forest and boosting. As ...
+## Random forest
 ```{r}
 rf_mod <- randomForest(Quality.of.Sleep ~ ., data = sleepdata)
 rf_mod
@@ -207,7 +213,7 @@ tibble(
   geom_bar(stat = "identity")
 ```
 
-# Boosting
+## Boosting
 ```{r}
 gbm_train <- train(Quality.of.Sleep ~ .,
                    data = sleepdata,
@@ -223,8 +229,6 @@ predictions <- predict(gbm_train)
 ### Performance evaluation
 
 ### Interpretation of model
-
-## Complex model selection
 
 
 
