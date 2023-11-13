@@ -236,8 +236,13 @@ class_predicted <- predict(tree_mod,
 class_predicted
 ```
 ```{r}
-# Generate confusion matric for the test data
-confusionMatrix(class_predicted, test_data$Quality.of.Sleep)
+# Generate confusion matrix for the test data
+confusionMatrix(class_predicted, reference = test_data$Quality.of.Sleep)
+
+```
+```{r}
+# Model accuracy
+accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted)
 
 ```
 
