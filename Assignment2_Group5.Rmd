@@ -59,7 +59,7 @@ With this dataset, we aim to predict a person's sleep quality. We chose this res
 Before we begin, the data should be cleaned for proper use.
 ## Missing data
 ```{r}
-md.pattern(sleepdata)
+md.pattern(sleepdata, rotate.names = TRUE)
 ```
 There is no missing data in this dataset!
 
@@ -105,7 +105,8 @@ boxplot.stats(sleepdata$Daily.Steps)$out
 
 out <- boxplot.stats(sleepdata$Heart.Rate)$out # Save the outliers of Heart.Rate in variable out
 out_ind <- which(sleepdata$Heart.Rate %in% c(out)) # Find the indices of the outliers in the dataset
-sleepdata[out_ind, ] # Show the outliers in the dataset
+sleepdata[out_ind, ] %>% 
+  select(Heart.Rate, BMI.Category, Sleep.Disorder) # Show the outliers in the dataset
 ```
 As can be seen, only the Heart.Rate variable contains outliers; people with a much higher than average heart rate during sleep. When we look at the entries, we see that all these people have a sleep disorder, and that almost all of them are overweight or obese. Because of this, we conclude that these are "expected" outliers, and keep them in the dataset. 
 
