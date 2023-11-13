@@ -1,6 +1,6 @@
 ---
 title: "A2_Group5"
-author: "Mirre Dona (6156630), Merel Das (6600034), Lukas Stemerdink (6217265)"
+author: "Merel Das (6600034), Mirre Dona (6156630), Lukas Stemerdink (6217265)"
 date: "2023-11-12"
 output: html_document
 ---
