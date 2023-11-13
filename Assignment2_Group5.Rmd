@@ -61,7 +61,12 @@ sleepdata %<>%
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
          BMI.Category = as.factor(BMI.Category),
-         Sleep.Disorder = as.factor(Sleep.Disorder))
+         Sleep.Disorder = as.factor(Sleep.Disorder)) %>% 
+  separate_wider_delim(cols = Blood.Pressure, delim = "/", names = c("Systolic", "Diastolic")) %>% 
+  mutate(Blood.Reading = ifelse(
+    test = Systolic >= 130 & Diastolic >= 90, yes = "High", no = ifelse(
+      test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
+    )))
 ```
 !!nog iets doen met blood pressure
 
