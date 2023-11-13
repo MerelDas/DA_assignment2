@@ -303,8 +303,14 @@ accuracy(actual = test_data$Quality.of.Sleep, predicted = pred3) # Outcome is 0.
 The accuracy of the pruned model is 0.8511. This is lower than the accuracy of the model based on information-splitting.
 
 # Complex model selection
-To improve upon our simple model, we tried random forest and boosting. As ...
+Our simple model, a single decision tree, is prone to overfit on the training data. To improve upon this model, we tried random forest and boosting, as these are ensemble methods that combine predictions of multiple trees. This helps reduce overfitting by aggregating the results of multiple models, leading to more robust generalization to unseen data. This also means they are less sensitive to noise and outliers in the data. 
+Decision trees might not always effectively prioritize and select the most important features, as they work top-down and greedy. Random Forest and boosting methods provide a more reliable measure of feature importance by considering the collective contribution of features across multiple trees.
+Decision trees also may struggle with imbalanced datasets, favoring the majority class.
+While boosting methods in particular can assign higher weights to misclassified instances, helping address class imbalances more effectively.
+So overall, Random Forest and Boosting have many advantages compared to decision trees.
+
 ## Random forest
+Let's train a random forest model on the training data, and predict the labels of the test data.
 ```{r}
 cvcontrol <- trainControl(method = "repeatedcv", #cross validation
                           number = 10,
@@ -331,10 +337,12 @@ data.frame(varImp(rf_train)$importance) %>%
 The most important predictors for the random forest model are sleep duration and stress level. This is different (or not?) than the predictors used in the single decision tree.
 
 ### Evaluation random forest
+To evaluate whether this model is better than the simple model, we create a confusion matrix again and calculate relevant metrics.
 ```{r}
 confusionMatrix(rf_test, test_data$Quality.of.Sleep)
 ```
 The performance of the random forest model is very good, with an accuracy of 97% on the test data.
+ROC/AUC?
 
 ## Boosting
 ```{r}
