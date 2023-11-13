@@ -174,10 +174,9 @@ We decided not to go with support vector machines as it is most effective when t
 
 This is also the reason why we do not think KNN will be a good method, as this method works best for well-defined clusters.
 
-LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. 
+LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. As can be seen below, this is not the case for our data, so we do not use this method.
 
-We chose to try random forest as this technique is robust, handles non-linear relationships well, and can capture complex interactions in the data. It is also good at finding the most informative predicors in the set without having to specify them. 
-
+We chose to use decision trees as classification models as they are robust, handle non-linear relationships well, and can capture complex interactions in the data. They is also good at finding the most informative predictors in the set without having to specify them. As a first model, we simply train one decision tree. 
 
 ### Train, dev, test
 First we split the data in training, validation, and test data
