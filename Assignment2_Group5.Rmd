@@ -143,7 +143,14 @@ To create a well performing model to predict sleep quality, it is important to c
 
 ### Correlation
 ```{r}
-cordata <- sleepdata %>% select(-Gender, -Occupation, -BMI.Category, -Blood.Pressure, -Sleep.Disorder)
+cordata <- sleepdata %>% 
+  mutate(Gender   = as.numeric(Gender),
+         Occupation = as.numeric(Occupation),
+         BMI.Category = as.numeric(BMI.Category),
+         Sleep.Disorder = as.numeric(Sleep.Disorder),
+         Blood.Pressure = as.numeric(Blood.Pressure))
+
+
 #create correlation matrix
 corr_mat <- round(cor(cordata),2)
 
@@ -151,7 +158,30 @@ corr_mat <- round(cor(cordata),2)
 melted_corr_mat <- melt(corr_mat)
 
 # plotting the correlation heatmap
-ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
+ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()+ theme(axis.text.x=element_text(angle=-15, hjust=-0.01))  + geom_text(aes(Var2, Var1, label = value), color = "white", size = 2)
+```
+The variable sleep duration is the most correlated with sleep quality. 
+
+
+## Simple model selection
+### Train, dev, test
+```{r}
+#train, test, etc.
+set.seed(123)
+train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set.
+train_data <- sleepdata[train,]
+test_data <- sleepdata[-train,] #use the other 25% of the rows for the test set.
+
+```
+
+```{r}
+# Train a simple linear regression model
+simple_model <- lm(Quality.of.Sleep ~ ., data = train_data)
+
+# Make predictions on the test set
+simple_predictions <- test_train %>% 
+  mutate(Blood.Pressure = )
+  predict(simple_model, newdata = test_data)
 ```
 
 # R function to generate all formulas up to size n
@@ -178,34 +208,6 @@ generate_formulas <- function(p, x_vars, y_var) {
   })
 }
 ```
-
-
-
-
-
-### PCA (of wa anders)
-
-## Simple model selection
-### Train, dev, test
-```{r}
-#train, test, etc.
-set.seed(123)
-train <- sample(1:nrow(sleepdata), 0.75*nrow(sleepdata)) # 75% of the rows for the training set.
-train_data <- sleepdata[train,]
-test_data <- sleepdata[-train,] #use the other 25% of the rows for the test set.
-
-#EDA
-summary(train_data)
-
-# Train a simple linear regression model
-simple_model <- lm(Quality.of.Sleep ~ ., data = train_data)
-
-# Make predictions on the test set
-simple_predictions <- test_train %>% 
-  mutate(Blood.Pressure = )
-  predict(simple_model, newdata = test_data)
-```
-
 
 ### Train model
 
