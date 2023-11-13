@@ -64,7 +64,7 @@ md.pattern(sleepdata)
 There is no missing data in this dataset!
 
 ## Transform variable types
-Let's convert the variables to the right type for exploration and prediction later on.
+Let's convert the variables to the right type for exploration and prediction later on. We chose to transform the sleep quality (a scale from 10 - 10) to a factor, as we have found in literature that for ratings with a narrow range, classification techniques often work better than regression. [1](https://aclanthology.org/W10-1205.pdf)[2](https://towardsdatascience.com/1-to-5-star-ratings-classification-or-regression-b0462708a4df)
 ```{r}
 # Check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
 unique(sleepdata$Occupation)
@@ -77,7 +77,13 @@ sleepdata %<>%
   mutate(Gender   = as.factor(Gender),
          Occupation = as.factor(Occupation),
          BMI.Category = as.factor(BMI.Category),
-         Sleep.Disorder = as.factor(Sleep.Disorder)) 
+         Sleep.Disorder = as.factor(Sleep.Disorder),
+         Sleep.Disorder = as.factor(Sleep.Disorder)) %>% 
+  separate_wider_delim(cols = Blood.Pressure, delim = "/", names = c("Systolic", "Diastolic")) %>% 
+  mutate(Blood.Reading = ifelse(
+    test = Systolic >= 130 & Diastolic >= 90, yes = "High", no = ifelse(
+      test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
+    )))waaa
 ```
 !!nog iets doen met blood pressure
 
@@ -119,13 +125,18 @@ plot_sleepdata2 <- sleepdata %>% mutate(
   theme_minimal() +
   labs(title="Sleep quality compared to sleep duration", x="Sleep quality", y="Sleep duration")
 plot_sleepdata2
+```
 
-# Create a boxplot of the sleep quality per gender.
+As can be seen in the box plot above, generally, the sleep quality increases as sleep duration increases. 
+```{r}
 ggplot(sleepdata, aes(x = Gender, y = Quality.of.Sleep)) +
   geom_boxplot(fill = "lightblue") +
+  theme_minimal() +
   labs(title = "Sleep Quality by Gender", y = "Quality of Sleep")
+```
+Moreover, women seem to have a higher quality of sleep on average compared to men. 
 
-# Summarize per Occupation the Sleep Duration
+```{r}
 sleepdata %>% 
   group_by(Occupation) %>%
   summarise( 
@@ -134,28 +145,36 @@ sleepdata %>%
     max = max(Sleep.Duration),
     mad = mad(Sleep.Duration) # Adding median absolute deviation 
   )
+```
+Then, looking at the median, min, max, and median absolute deviation sleep duration per occupation, it can be seen that Sales Representatives sleep the least on average, followed by Scientist. Though the variation is not very strong per occupation, there is some variance. 
 
-# Plot the average Quality of Sleep per BMI.Category
+```{r}
 sleepdata %>% 
   ggplot(aes(x = BMI.Category, y = Quality.of.Sleep)) + 
   scale_x_discrete(limits = c("Normal", "Normal Weight", "Overweight", "Obese")) +
-  geom_boxplot()
-
+  geom_boxplot(fill = "lightblue") + 
+  theme_minimal() + 
+  labs(title = "Sleep Quality per BMI category", x = "BMI category", y = "Quality of Sleep")
 ```
-From this, it can be seen that it is not true that most people rated their sleep quality with 7. So other reasons behind this variety can be tested. However, it is clear that less people rated their sleep quality with 4 or 5, which could be a reason why there is less variety in sleep duration when the sleep quality is 4 or 5 (viewed in the boxplot).
+Lastly, looking at how the BMI category impacts the quality of sleep, people with lower weight seem to sleep better than heavier people. 
 
 # Prediction model
-As described above, the response variable we chose to predict is quality of sleep. This response variable is a numerical variable with possible integer values 1 through 10. We considered converting this to a categorical variable 
+As described above, the response variable we chose to predict is quality of sleep. This is a (transformed) categorical variable with possible values 1 through 10.
 
 ## Feature selection
 To create a well performing model to predict sleep quality, it is important to consider which features to use as predictors. To find which features are probably the most useful for predicting sleep quality, we do a short correlation analysis.
 
 ### Correlation
 ```{r}
-# Store the data without the categorical variables in a new variable, cordata
-cordata <- sleepdata %>% select(-Gender, -Occupation, -BMI.Category, -Blood.Pressure, -Sleep.Disorder)
+cordata <- sleepdata %>% 
+  mutate(Gender   = as.numeric(Gender),
+         Occupation = as.numeric(Occupation),
+         BMI.Category = as.numeric(BMI.Category),
+         Sleep.Disorder = as.numeric(Sleep.Disorder),
+         Blood.Pressure = as.numeric(Blood.Pressure))
 
-# Create correlation matrix
+
+#create correlation matrix
 corr_mat <- round(cor(cordata),2)
 
 # Reduce the size of correlation matrix
@@ -165,9 +184,25 @@ melted_corr_mat <- melt(corr_mat)
 ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
 ```
 
+# plotting the correlation heatmap
+ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile()+ theme(axis.text.x=element_text(angle=-15, hjust=-0.01))  + geom_text(aes(Var2, Var1, label = value), color = "white", size = 2)
+```
+The variable sleep duration is the most correlated with sleep quality.
 
 ## Simple model selection
+As a model for this prediction problem we considered decision trees (including bagging, boosting, and random forest), support vector machines, LDA, and K-nearest neighbors, since these are the methods we studied in the course for multi-class classification.
+
+We decided not to go with support vector machines as it is most effective when there is a clear margin of separation between classes, and we don't think this will be the case for this dataset. Although we transformed the response variable to a factor, we know there is actually an ordinal structure in the variable. The ratings are also subjective, so it could for example be that some people rated their sleep quality a 6, while others would rate it 5 or 7. This means the classes are probably overlapping.
+
+This is also the reason why we do not think KNN will be a good method, as this method works best for well-defined clusters.
+
+LDA is an effective method for multi-class identification, but assumes that the features are normally distributed within each class and that the covariance matrices of different classes are equal. 
+
+We chose to try random forest as this technique is robust, handles non-linear relationships well, and can capture complex interactions in the data. It is also good at finding the most informative predicors in the set without having to specify them. 
+
+
 ### Train, dev, test
+First we split the data in training, validation, and test data
 ```{r}
 set.seed(123)
 
