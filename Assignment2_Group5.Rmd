@@ -188,7 +188,7 @@ LDA is an effective method for multi-class identification, but assumes that the 
 We chose to use decision trees as classification models as they are robust, handle non-linear relationships well, and can capture complex interactions in the data. They is also good at finding the most informative predictors in the set without having to specify them. As a first model, we simply train one decision tree. 
 
 ### Train, dev, test
-First we split the data in training, and test data
+First we split the data in training, and test data. For tree generation, we remove Diastolic and Systolic from the data, as we have a new variable (Blood.Reading) in which these values are combined. 
 ```{r}
 set.seed(123)
 
@@ -215,15 +215,10 @@ rpart.plot(tree_mod, yesno=2) # Yes/no at each split.
 ```
 As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is predicted correctly in all cases. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7). Moreover, the tree does not use all variables; only Stress.Level, Occupation, and Sleep.Duration are used (3 out of 11 variables). This means that these variables are the strongest contributors to predicting. Quality.of.Sleep. 
 
-```{r}
-tree_full_mod <- rpart(Quality.of.Sleep ~., sleepdatatree, control = rpart.control(minbucket = 1, cp = 0))
-rpart.plot(tree_full_mod)
-```
-
-By letting the splits continue untill all cases are classified, we generate the above tree. However, this model probably has too much variance to perform well on new samples (imposing a bias/variance tradeoff). 
+By letting the splits continue until all cases are classified, we could generate a tree with all predictors. However, this model will have too much variance to perform well on new samples (imposing a unfavourable bias/variance tradeoff). So we disregard that model, as it is likely to overfit the data. 
 
 ### Performance evaluation
-Now, we can use the model to predict the sleep quality of the test data.
+Now, we can use the tree model to predict the sleep quality of the test data.
 
 ```{r}
 # Class prediction
@@ -231,19 +226,15 @@ class_predicted <- predict(tree_mod,
                            newdata = test_data,
                            type = "class")
 class_predicted
-```
-```{r}
+
 # Generate confusion matrix for the test data
 confusionMatrix(class_predicted, reference = test_data$Quality.of.Sleep)
 ```
+
 The accuracy of the model is 0.8723. The model is good at predicting a sleep quality of 9, but not at all at predicting a sleep quality of 4 or 5. 
 
-```{r}
-
-```
-
-
 The next step is to try to improve the model. We will try to improve the model by tuning the parameters. Gini and information are two different ways to measure the impurity of the nodes.
+
 ```{r}
 # Model accuracy
 accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted) # Outcome: 0.8723404
