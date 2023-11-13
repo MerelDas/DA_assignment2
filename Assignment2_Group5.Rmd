@@ -9,8 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Load libraries
-```{r}
+# Load libraries
+
+```{r, message=FALSE}
 library(ISLR) 
 library(tidyverse) 
 library(readr) # For data import
@@ -44,19 +45,20 @@ head(sleepdata)
 The Sleep Health and Lifestyle Dataset, here called sleepdata, consists of 400 rows and 13 columns. The dataset consists of sleep-related data. A lot of variables are presented, including gender, age, occupation, sleep duration, quality of sleep, physical activity levels, stress levels, BMI category, blood pressure, heart rate, daily steps, and, if it is the case, the sleep disorders. This dataset offers the opportunity to gain insights into whether sleep factors and lifestyle factors are related.
 
 The following variables are included in the dataset:
+
 * **Person ID**: An identifier for each individual in the dataset (stored as integer).
-* **Gender**: [Male/Female] (stored as object).
+* **Gender**: [Male/Female] (stored as string).
 * **Age**: The age of the person in years (stored as integer).
-* **Occupation**: The occupation or profession of the person (stored as object).
-* **Sleep Duration**: The number of hours the person sleeps per day (stored as float).
+* **Occupation**: The occupation or profession of the person (stored as string).
+* **Sleep Duration**: The number of hours the person sleeps per day (stored as numeric).
 * **Quality of Sleep**: [1-10] A subjective rating of the quality of sleep, ranging from 1 to 10 (stored as integer).
 * **Physical Activity Level**: The number of minutes the person engages in physical activity daily (stored as integer of minutes/day).
 * **Stress Level** [1-10]: A subjective rating of the stress level experienced by the person, ranging from 1 to 10 (stored as integer).
-* **BMI Category**: The BMI category of the person (e.g., Underweight, Normal, Overweight, stored as object).
-* **Blood Pressure** (systolic/diastolic): The blood pressure measurement of the person, indicated as systolic pressure over diastolic pressure (stored as object).
+* **BMI Category**: The BMI category of the person (e.g., Underweight, Normal, Overweight, stored as string).
+* **Blood Pressure** (systolic/diastolic): The blood pressure measurement of the person, indicated as systolic pressure over diastolic pressure (stored as string).
 * **Heart Rate** (bpm): The resting heart rate of the person in beats per minute (stored as integer).
 * **Daily Steps**: The number of steps the person takes per day (stored as integer).
-* **Sleep Disorder**: The presence or absence of a sleep disorder in the person (None, Insomnia, Sleep Apnea, stored as object).
+* **Sleep Disorder**: The presence or absence of a sleep disorder in the person (None, Insomnia, Sleep Apnea, stored as string).
 
 To download the dataset, click [here](https://www.kaggle.com/code/jillanisofttech/sleep-health-and-lifestyle-predication-with-94-ac).
 
@@ -69,16 +71,15 @@ Before we begin, the data should be cleaned for proper use.
 ```{r}
 md.pattern(sleepdata, rotate.names = TRUE)
 ```
-There is no missing data in this dataset!
+There is no missing data in this dataset.
 
 ## Transform variable types
-Let's convert the variables to the right type for exploration and prediction later on. We chose to transform the sleep quality (a scale from 10 - 10) to a factor, as we have found in literature that for ratings with a narrow range, classification techniques often work better than regression. [1](https://aclanthology.org/W10-1205.pdf)[2](https://towardsdatascience.com/1-to-5-star-ratings-classification-or-regression-b0462708a4df). Blood.Pressure is split into Systolic (pressure) and Diastolic (pressure), both are then compared to ideal/high/low pressure and labeled as such [3](https://www.nhs.uk/common-health-questions/lifestyle/what-is-blood-pressure/). 
+Let's convert the variables to the right type for exploration and prediction later on. We chose to transform the sleep quality (a scale from 1 - 10) to a factor, as we have found in literature that for ratings with a narrow range, classification techniques often work better than regression.[1](https://aclanthology.org/W10-1205.pdf), [2](https://towardsdatascience.com/1-to-5-star-ratings-classification-or-regression-b0462708a4df). Blood.Pressure is split into Systolic (pressure) and Diastolic (pressure), both are then compared to ideal/high/low pressure and labeled as such.[3](https://www.nhs.uk/common-health-questions/lifestyle/what-is-blood-pressure/) 
 ```{r}
 # Check how many unique values of occupation, to see if it makes sense to convert to factor, or if there are too many unique values
 unique(sleepdata$Occupation)
 #The amount of values for the other chr variables were inspected in the R environment
 
-# Blood.Pressure is split, converted, and compared
 # All variables are changed to factor, as downloading a .csv changes all properties
 sleepdata %<>% 
   mutate(Gender   = as.factor(Gender),
@@ -88,6 +89,7 @@ sleepdata %<>%
          Sleep.Disorder = as.factor(Sleep.Disorder),
          Quality.of.Sleep = as.factor(Quality.of.Sleep)) 
 
+# Blood.Pressure is split, converted, and compared
 sleepdata %<>% 
   separate_wider_delim(cols = Blood.Pressure, delim = "/", names = c("Systolic", "Diastolic")) %>% 
   mutate(Blood.Reading = ifelse(
@@ -95,7 +97,8 @@ sleepdata %<>%
       test = Systolic <= 90 & Diastolic <= 60, yes = "Low", no = "Ideal"
     ))) %>% 
   mutate(Systolic = as.numeric(Systolic)) %>% 
-  mutate(Diastolic = as.numeric(Diastolic))
+  mutate(Diastolic = as.numeric(Diastolic)) %>% 
+  mutate(Blood.Reading = as.factor(Blood.Reading))
 ```
 
 ## Select variables
@@ -107,7 +110,7 @@ sleepdata %<>% select(-Person.ID) # Remove Person.ID from sleepdata
 ## Outlier removal
 We checked for potential outliers based on the IQR criterion. For this, we used boxplot stats per numerical value, and looked how many outliers it produced. 
 
-```{r}
+```{r, warning=FALSE}
 # Check the outliers per variable:
 boxplot.stats(sleepdata$Sleep.Duration)$out 
 boxplot.stats(sleepdata$Quality.of.Sleep)$out
@@ -186,8 +189,8 @@ LDA is an effective method for multi-class identification, but assumes that the 
 
 We chose to use decision trees as classification models as they are robust, handle non-linear relationships well, and can capture complex interactions in the data. They is also good at finding the most informative predictors in the set without having to specify them. As a first model, we simply train one decision tree. 
 
-### Train, dev, test
-First we split the data in training, and test data
+### Split train test
+First we split the data in training, and test data. For tree generation, we remove Diastolic and Systolic from the data, as we have a new variable (Blood.Reading) in which these values are combined. 
 ```{r}
 set.seed(123)
 
@@ -205,24 +208,20 @@ test_data <- sleepdatatree[-train,] # Use the other 25% of the rows for the test
 Then, we train the decision tree model using the training data.
 
 ```{r}
-# Train the decision tree model using the training data.
-tree_mod <- rpart(Quality.of.Sleep ~ ., data = train_data, method = "class") #method = "class" because we are predicting a categorical variable
+# Train the decision tree model using the training data
+tree_mod <- rpart(Quality.of.Sleep ~ ., data = train_data, method = "class") # method = "class" because we are predicting a categorical variable
 
 # Plot tree
-rpart.plot(tree_mod, yesno=2) # Yes/no at each split.
+rpart.plot(tree_mod, yesno=2) # Yes/no at each split
 
 ```
-As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. Besides, a sleep quality of 9 is predicted correctly in all cases. And the sleep quality of 7 is in most cases bad predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7.)
 
-```{r}
-tree_full_mod <- rpart(Quality.of.Sleep ~., sleepdatatree, control = rpart.control(minbucket = 1, cp = 0))
-rpart.plot(tree_full_mod)
-```
+As can be seen, the sleep quality levels of 4 and 5 are not predicted in the tree. However, a sleep quality of 9 is predicted correctly in all cases. And the sleep quality of 7 is in most cases incorecctly predicted (for instance in 43% of the cases, a 4 is the true data, but classified as a 7). Moreover, the tree does not use all variables; only Stress.Level, Occupation, and Sleep.Duration are used (3 out of 11 variables). This means that these variables are the strongest contributors to predicting Quality.of.Sleep. 
 
-By letting the splits continue untill all cases are classified, we generate the above tree. However, this model probably has too much variance to perform well on new samples (imposing a bias/variance tradeoff). 
+By letting the splits continue until all cases are classified, we could generate a tree with all predictors. However, this model will have too much variance to perform well on new samples (imposing a unfavourable bias/variance tradeoff). So we disregard that model, as it is likely to overfit the data. 
 
 ### Performance evaluation
-Now, we can use the model to predict the sleep quality of the test data.
+Now, we can use the tree model to predict the sleep quality of the test data.
 
 ```{r}
 # Class prediction
@@ -230,35 +229,24 @@ class_predicted <- predict(tree_mod,
                            newdata = test_data,
                            type = "class")
 class_predicted
-```
-```{r}
+
 # Generate confusion matrix for the test data
 confusionMatrix(class_predicted, reference = test_data$Quality.of.Sleep)
-
 ```
-The accuracy of the model is 0.8723. The model is good at predicting a sleep quality of 9, but not at all at predicting a sleep quality of 4 or 5.
 
-The next step is to try to improve the model. We will try to improve the model by tuning the parameters. Gini and information are two different ways to measure the impurity of the nodes.
+The accuracy of the model is 0.8723. The model is good at predicting a sleep quality of 9, but not at all at predicting a sleep quality of 4 or 5. 
+
+The next step is to try to improve the model. We will try to improve the model by tuning the parameters. Gini-splitting and information-splitting are two different ways to measure the impurity of the nodes. As gini-splitting is the default, we are now rebuilding the decision tree using information-splitting to compare the accuracy.
+
 ```{r}
 # Model accuracy
-accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted) # Outcome: 0.8723404
-
-# Model training based on gini-splitting
-tree_mod_gini <- rpart(Quality.of.Sleep ~ .,
-                       data = train_data, 
-                       method = "class", 
-                       parms = list(split = "gini")) # split = gini means that the split is based on the impurity of the nodes.
+accuracy(actual = test_data$Quality.of.Sleep, predicted = class_predicted) 
 
 # Model training based on information splitting.
 tree_mod_info <- rpart(Quality.of.Sleep ~ .,
                        data = train_data, 
                        method = "class", 
                        parms = list(split = "information")) # split = information means that the split is based on the information gain of the nodes.
-
-# Class predictions with gini-based splitting
-pred <- predict(tree_mod_gini,
-                newdata = test_data, 
-                type = "class")
 
 # Class prediction with information-based splitting
 pred2 <- predict(tree_mod_info,
@@ -270,41 +258,18 @@ pred2 <- predict(tree_mod_info,
 The data of the classification accuracy on the test data will be compared for the two models. 
 ```{r}
 # Compare classification accuracy on test data
-accuracy(actual = test_data$Quality.of.Sleep, predicted = pred) # Outcome is 0.8723404
+accuracy(actual = test_data$Quality.of.Sleep, predicted = pred2) 
 
-accuracy(actual = test_data$Quality.of.Sleep, predicted = pred2) # Outcome is 0.9148936
-
-rpart.plot(x = tree_mod_gini, yesno = 2, extra = 0, type = 0)
+rpart.plot(x = tree_mod_info, yesno = 2)
 ```
-The accuracy of the model based on gini-splitting is 0.8723, and the accuracy of the model based on information-splitting is 0.9149. The model based on information-splitting is better at predicting the sleep quality of the test data.
 
-### Tree pruning 
-The next step is to prune the tree. Pruning is a technique in machine learning that reduces the size of decision trees by removing sections of the tree that provide little power to classify instances. Pruning reduces the complexity of the final classifier, and hence improves predictive accuracy by the reduction of overfitting.
+The accuracy of the model based on gini-splitting is 0.8723, and the accuracy of the model based on information-splitting is 0.9149. The model based on information-splitting is better at predicting the sleep quality of the test data. The above tree still does not classify level 4 and 5, but it does add an additional predictor (Heart.Rate), while removing the predictor Stress.Level.
 
-```{r}
-plotcp(tree_mod_gini)
-print(tree_mod_gini$cptable)
-
-index <- which.min(tree_mod_gini$cptable[,"xerror"]) # Outcome: 4 4
-cp_optimal <- tree_mod_gini$cptable[index, "CP"] # Outcome: 0.02051282
-
-tree_mod_pruned <- prune(tree_mod_gini, cp = cp_optimal)
-
-# Plot optimized model
-rpart.plot(tree_mod_pruned, yesno = 2, extra = 0, type = 0)
-```
-```{r}
-pred3 <- predict(tree_mod_pruned,
-                 newdata = test_data, 
-                 type = "class")
-
-accuracy(actual = test_data$Quality.of.Sleep, predicted = pred3) # Outcome is 0.8510638
-```
-The accuracy of the pruned model is 0.8511. This is lower than the accuracy of the model based on information-splitting.
+As the tree is relatively small and not overly complex, we do not prune it.
 
 # Complex model selection
 Our simple model, a single decision tree, is prone to overfit on the training data. To improve upon this model, we tried random forest and boosting, as these are ensemble methods that combine predictions of multiple trees. This helps reduce overfitting by aggregating the results of multiple models, leading to more robust generalization to unseen data. This also means they are less sensitive to noise and outliers in the data. 
-Decision trees might not always effectively prioritize and select the most important features, as they work top-down and greedy. Random Forest and boosting methods provide a more reliable measure of feature importance by considering the collective contribution of features across multiple trees.
+Decision trees might not always effectively prioritize and select the most important features, as they work top-down and are greedy. Random Forest and boosting methods provide a more reliable measure of feature importance by considering the collective contribution of features across multiple trees.
 Decision trees also may struggle with imbalanced datasets, favoring the majority class.
 While boosting methods in particular can assign higher weights to misclassified instances, helping address class imbalances more effectively.
 So overall, Random Forest and Boosting have many advantages compared to decision trees.
@@ -312,7 +277,7 @@ So overall, Random Forest and Boosting have many advantages compared to decision
 ## Random forest
 Let's train a random forest model on the training data, and predict the labels of the test data.
 ```{r}
-cvcontrol <- trainControl(method = "repeatedcv", #cross validation
+cvcontrol <- trainControl(method = "repeatedcv", # Cross validation
                           number = 10,
                           allowParallel = TRUE)
 rf_train <- train(Quality.of.Sleep ~ .,
@@ -324,47 +289,54 @@ rf_train <- train(Quality.of.Sleep ~ .,
 rf_test  <- predict(rf_train, newdata = test_data)
 ```
 
-As the structure information of the trees is lost when averaging multiple trees, we can inspect which predictors were most informative by plotting the variable importance. 
+As the structure information of the trees is lost when averaging multiple trees, we can inspect which predictors were most informative by plotting the variable importance. The variable importance was returned per level of the response variable, so the values were averaged over the levels. 
+
 ```{r}
 data.frame(varImp(rf_train)$importance) %>% 
-  mutate(avg_Importance = rowMeans(.), names=row.names(.)) %>% #mean of varImp for each response level
+  mutate(avg_Importance = rowMeans(.), names=row.names(.)) %>% # Mean of varImp for each response level
   ggplot(aes(x=reorder(names, avg_Importance), y=avg_Importance)) + 
-  geom_bar(stat = "identity") + 
+  geom_bar(stat = "identity", fill = "lightblue") + 
   coord_flip() + 
   theme_minimal() + 
-  labs(title="Variable importance plot")
+  labs(title="Variable importance plot", x = "Average importance", y = "Names of predictors")
 ```
-The most important predictors for the random forest model are sleep duration and stress level. This is different (or not?) than the predictors used in the single decision tree.
+
+The most important predictors for the random forest model are sleep duration and stress level. This is the same as the predictors used in the single decision tree.
 
 ### Evaluation random forest
 To evaluate whether this model is better than the simple model, we create a confusion matrix again and calculate relevant metrics.
 ```{r}
 confusionMatrix(rf_test, test_data$Quality.of.Sleep)
 ```
-The performance of the random forest model is very good, with an accuracy of 97% on the test data.
-ROC/AUC?
+The performance of the random forest model is very good, with an accuracy of 96.81% on the test data. The sensitivity and specificity are high as well, as can be seen in the statistics of the confusion matrix. 
 
 ## Boosting
-```{r}
+A boosting model is different from Random Forest, it builds a decision tree sequentially, based on the residuals from each previous model. Let's see if a boosting model performs even better.
+```{r, warning=FALSE}
 gbm_train <- train(Quality.of.Sleep ~ .,
-                   data = sleepdata,
+                   data = train_data,
                    method = "gbm",
                    verbose = F, 
                    trControl = cvcontrol)
 
-summary(gbm_train) #var importance plot
-
-gbm_test <- predict(gbm_train, newdata = test_data)
+summary(gbm_train, plotit = FALSE) # Var importance plot
 ```
 
+Sleep duration and stress level are again the most important predictors.
 
 ### Evaluation boosting
-accuracy? roc/auc? -> see week 6
 ```{r}
-confusionMatrix(preds, labels)
+gbm_test <- predict(gbm_train, newdata = test_data)
+confusionMatrix(gbm_test, test_data$Quality.of.Sleep)
 ```
 
+The boosting model is only slightly better than the Random Forest model, the accuracy is 0.9787. The difference is so small that it is probably just random variation.
 
+# Conclusions
+
+As can be seen by the high accuracy, decision trees are a good type of classification model for predicting the sleep quality in this dataset. We found the best results for the boosting model, which returned 0.9787 accuracy, compared to 0.9681 for the random forest. The single decision tree returned 0.8723 accuracy. The advantages we mentioned before for random forest and boosting hold for this dataset, as the prediction accuracy improved quite significantly. 
+
+In the exploratory data analysis, we expected sleep duration and BMI category would be strong predictors for quality of sleep. This turned out to be mostly true, sleep duration was the most important while BMI was not significantly important. Stress level and age were additional important predictors. 
 
 ## Acknowledgement 
 Sadly, after all our analyses, we found out that the data is synthetic and created by the author for illustrative purposes. However, the performed analyses should still hold as if the data was genuine. Any patterns that we found however, are most likely not present in actual sleep/health data. 
